@@ -1,0 +1,5 @@
+title: cairn
+theme: minima
+exclude:
+  - LICENSE
+  - README.md
