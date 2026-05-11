@@ -8,7 +8,7 @@ This page is the support resource for the iOS app.
 
 ## Get help
 
-Email **egrahamlarue@gmail.com** for support, bug reports, or feature requests. Include:
+Email **cairn-ios@proton.me** for support, bug reports, or feature requests. Include:
 
 - the build number you're running (Settings → About cairn)
 - your iOS version
