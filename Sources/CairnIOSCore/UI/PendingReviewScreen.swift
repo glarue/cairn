@@ -1476,20 +1476,20 @@ private struct BatchRow: View {
     @Environment(\.cairnTokens) private var t
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            if selectionMode {
-                selectionIndicator
-            }
-            stackedThumb
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(count) photos")
-                    .font(.cairnScaled(size: 13, weight: .semibold))
-                    .foregroundStyle(t.text)
-                    .lineLimit(1)
+        // Two rows: identity + countdown + expand on top (so "N photos"
+        // and the countdown get the full width and never truncate), the
+        // whole-batch action chips on their own row below. A batch is a
+        // distinct element and can afford the extra height.
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center, spacing: 12) {
+                if selectionMode {
+                    selectionIndicator
+                }
+                stackedThumb
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Deleted together")
-                        .font(.cairnScaled(size: 11.5))
-                        .foregroundStyle(t.textMuted)
+                    Text("\(count) photos")
+                        .font(.cairnScaled(size: 13, weight: .semibold))
+                        .foregroundStyle(t.text)
                         .lineLimit(1)
                     if let countdown {
                         Text(countdown)
@@ -1498,11 +1498,21 @@ private struct BatchRow: View {
                             .lineLimit(1)
                     }
                 }
+                Spacer(minLength: 8)
+                if !selectionMode {
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.cairnScaled(size: 12, weight: .semibold))
+                        .foregroundStyle(t.textMuted)
+                        .frame(width: 28, height: 28)
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
             if !selectionMode {
                 HStack(spacing: 8) {
+                    Text("Deleted together")
+                        .font(.cairnScaled(size: 11.5))
+                        .foregroundStyle(t.textHint)
+                        .lineLimit(1)
+                    Spacer(minLength: 8)
                     RowIconButton(
                         systemName: "trash",
                         tone: .danger,
@@ -1521,10 +1531,6 @@ private struct BatchRow: View {
                         accessibilityLabel: "Exclude all \(count) photos in this batch",
                         action: onExclude
                     )
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.cairnScaled(size: 12, weight: .semibold))
-                        .foregroundStyle(t.textMuted)
-                        .frame(width: 32, height: 28)
                 }
             }
         }
@@ -1535,7 +1541,7 @@ private struct BatchRow: View {
             if selectionMode { onToggleSelect() } else { onToggleExpand() }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(count) photos deleted together")
+        .accessibilityLabel("\(count) photos deleted together, \(countdown ?? "")")
     }
 
     /// Representative thumbnail with a "stack" hint behind it and a count
