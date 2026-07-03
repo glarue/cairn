@@ -53,7 +53,7 @@ jobs:
             echo "::error::swift test had real test failures"
             exit 1
           fi
-          if grep -q "exited with unexpected signal code 5" /tmp/swifttest.log; then
+          if grep -qi "exited with unexpected signal code 5" /tmp/swifttest.log; then
             echo "::warning::swift test crashed at teardown (signal 5) with no test failures — tolerating known flake"
             exit 0
           fi
