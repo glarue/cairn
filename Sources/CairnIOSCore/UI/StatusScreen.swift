@@ -1407,10 +1407,15 @@ public struct StatusScreen: View {
     }
 
     static func relativeDay(_ date: Date) -> String {
-        let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0)
-        if days == 0 { return "<1d" }
-        if days == 1 { return "1 day" }
-        return "\(days) days"
+        // Ceiling of the remaining seconds — the SAME rounding as
+        // PendingReviewScreen's per-item "Trashes in N days" countdown, so
+        // the banner's "next in N days" matches the soonest card in the
+        // drill-down. Previously this used calendar-day truncation
+        // (`dateComponents([.day])`), which disagreed with the cards by up
+        // to a day. Keep the two in sync if either changes.
+        let remaining = date.timeIntervalSinceNow
+        let days = max(1, Int((remaining / 86_400).rounded(.up)))
+        return days == 1 ? "1 day" : "\(days) days"
     }
 
     private var syncCtaLabel: String {
