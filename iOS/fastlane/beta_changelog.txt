@@ -1,7 +1,9 @@
-0.4.2 (build 144) — server version shown in Connection settings.
+0.4.3 (build 145) — tidier quarantine queue, and a couple of countdown fixes.
 
-Settings → Connection now shows your Immich server's version. If your server is a newer major release than cairn has been verified against, you'll see a one-line heads-up there — advisory only, nothing is blocked, and cairn keeps working. It's just a hint to check for a cairn update if anything looks off.
+Big deletions no longer bury the rest. When a bunch of photos are queued to expire on the same day (a bulk delete), they now stack into a single "N photos" card in Pending Review instead of a long run of individual rows. Tap it to expand and review or act on them one by one; the trash/exclude/dismiss chips on the card act on the whole batch. Smaller same-day sets still show as individual cards.
 
-(Under the hood this build also adds a CI guardrail that watches Immich's API for changes to the specific endpoints cairn uses — no user-facing effect, but it's how we'll catch breaking server changes early. First run already confirmed the upcoming Immich 3.0 doesn't affect anything cairn relies on.)
+Two countdown fixes:
+- The quarantine list no longer reshuffles its order when you reopen the app — it now sorts soonest-to-trash first, consistently.
+- The Status "next in N days" banner now matches the countdown shown on the photo cards in the drill-down (they could disagree by a day before).
 
-To test: Settings → Connection → check the "Server version" row matches your server. Everything else should behave exactly as before.
+To test: if you have items in quarantine, reopen the app a few times and confirm the order stays put. Compare the "next in N days" on the Status card to the soonest item inside Pending Review — they should match. If you have 5+ photos deleted on the same day, confirm they appear as one stacked card that expands.
