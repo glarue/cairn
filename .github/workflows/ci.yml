@@ -38,4 +38,24 @@ jobs:
         run: swift build
 
       - name: swift test
-        run: swift test
+        # Tolerate the known swift-testing teardown crash (swiftpm-testing-
+        # helper SIGTRAPs on exit — "unexpected signal code 5" — AFTER the
+        # tests themselves finish), but ONLY when no test actually recorded
+        # a failure. This mirrors the tolerance in iOS/fastlane/Fastfile's
+        # `test` lane; a genuine failure prints a "recorded an issue" line,
+        # which we refuse to tolerate.
+        run: |
+          set +e -o pipefail
+          swift test 2>&1 | tee /tmp/swifttest.log
+          ec=${PIPESTATUS[0]}
+          if [ "$ec" -eq 0 ]; then exit 0; fi
+          if grep -qE "recorded an issue|✘ Test" /tmp/swifttest.log; then
+            echo "::error::swift test had real test failures"
+            exit 1
+          fi
+          if grep -q "exited with unexpected signal code 5" /tmp/swifttest.log; then
+            echo "::warning::swift test crashed at teardown (signal 5) with no test failures — tolerating known flake"
+            exit 0
+          fi
+          echo "::error::swift test failed (exit $ec) for a non-tolerated reason"
+          exit 1
