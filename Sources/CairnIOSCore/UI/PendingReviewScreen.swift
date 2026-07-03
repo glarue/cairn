@@ -69,6 +69,8 @@ public struct PendingReviewScreen: View {
     @State private var selectedChecksums: Set<String> = []
     /// Group keys currently expanded inline.
     @State private var expandedGroupKeys: Set<PendingReviewGroup.GroupKey> = []
+    /// Which same-day batch stacks are expanded to show their members.
+    @State private var expandedBatchIDs: Set<String> = []
     /// Asset whose thumbnail is currently zoomed in the overlay. Tap
     /// outside the overlay (or any other thumbnail) to dismiss. Mirrors
     /// `DryRunSheet`'s `zoomedCandidate` pattern so the interaction
@@ -83,6 +85,9 @@ public struct PendingReviewScreen: View {
         case approveVersion(checksum: String, label: String)
         case excludeVersion(checksum: String, label: String)
         case dismissVersion(checksum: String, label: String)
+        case approveBatch(id: String, count: Int, checksums: [String])
+        case excludeBatch(id: String, count: Int, checksums: [String])
+        case dismissBatch(id: String, count: Int, checksums: [String])
         case bulkOffload(count: Int)
         case bulkApprove(count: Int)
         case bulkExcludeSelected(count: Int)
@@ -97,6 +102,9 @@ public struct PendingReviewScreen: View {
             case .approveVersion(let c, _): return "approve-version-\(c)"
             case .excludeVersion(let c, _): return "exclude-version-\(c)"
             case .dismissVersion(let c, _): return "dismiss-version-\(c)"
+            case .approveBatch(let id, _, _): return "approve-\(id)"
+            case .excludeBatch(let id, _, _): return "exclude-\(id)"
+            case .dismissBatch(let id, _, _): return "dismiss-\(id)"
             case .bulkOffload(let n): return "bulk-\(n)"
             case .bulkApprove(let n): return "bulk-approve-\(n)"
             case .bulkExcludeSelected(let n): return "bulk-exclude-\(n)"
@@ -644,9 +652,15 @@ public struct PendingReviewScreen: View {
             }
             CairnCard {
                 VStack(spacing: 0) {
-                    ForEach(Array(heldGroups.enumerated()), id: \.element.id) { idx, group in
-                        groupCard(group, isUnconfirmed: false)
-                        if idx < heldGroups.count - 1 {
+                    let rows = heldRows
+                    ForEach(Array(rows.enumerated()), id: \.element.id) { idx, row in
+                        switch row {
+                        case .single(let group):
+                            groupCard(group, isUnconfirmed: false)
+                        case .batch(let id, let groups):
+                            batchCard(id: id, groups: groups)
+                        }
+                        if idx < rows.count - 1 {
                             RowDivider()
                         }
                     }
@@ -654,6 +668,15 @@ public struct PendingReviewScreen: View {
             }
             .padding(.bottom, 20)
         }
+    }
+
+    /// Held rows with same-day bulk deletes collapsed into batch stacks.
+    private var heldRows: [HeldRow] {
+        Self.heldRows(
+            heldGroups,
+            confirmedDeletedAt: confirmedDeletedAt,
+            quarantineDays: quarantineDays
+        )
     }
 
     private var unconfirmedSection: some View {
@@ -760,6 +783,58 @@ public struct PendingReviewScreen: View {
         }
     }
 
+    // MARK: - Batch card (same-day stack)
+
+    @ViewBuilder
+    private func batchCard(id: String, groups: [PendingReviewGroup]) -> some View {
+        let isExpanded = expandedBatchIDs.contains(id)
+        let checksums = groups.flatMap { $0.versions.map(\.checksum.base64) }
+        VStack(spacing: 0) {
+            BatchRow(
+                representative: groups.first?.versions.first,
+                count: groups.count,
+                countdown: batchCountdown(groups),
+                isExpanded: isExpanded,
+                selectionMode: selectionMode,
+                isSelected: !checksums.isEmpty && Set(checksums).isSubset(of: selectedChecksums),
+                onToggleSelect: { toggleChecksumsSelection(checksums) },
+                onToggleExpand: {
+                    if isExpanded { expandedBatchIDs.remove(id) } else { expandedBatchIDs.insert(id) }
+                },
+                onApprove: { pendingAction = .approveBatch(id: id, count: groups.count, checksums: checksums) },
+                onExclude: { pendingAction = .excludeBatch(id: id, count: groups.count, checksums: checksums) },
+                onDismiss: { pendingAction = .dismissBatch(id: id, count: groups.count, checksums: checksums) }
+            )
+            if isExpanded {
+                // Reveal the batch's members as ordinary group cards (each
+                // itself expandable if it's a multi-version photo).
+                ForEach(groups, id: \.id) { group in
+                    RowDivider()
+                    groupCard(group, isUnconfirmed: false)
+                }
+            }
+        }
+    }
+
+    /// Soonest countdown across a batch's members — matches the top card
+    /// once expanded (they share an expiry day).
+    private func batchCountdown(_ groups: [PendingReviewGroup]) -> String? {
+        let stamps = groups.flatMap { $0.versions }.compactMap { confirmedDeletedAt[$0.checksum.base64] }
+        guard let earliest = stamps.min() else { return nil }
+        return formatCountdown(earliest)
+    }
+
+    /// Add or remove a set of checksums from the selection in one tap
+    /// (used by the batch row's select toggle).
+    private func toggleChecksumsSelection(_ checksums: [String]) {
+        let set = Set(checksums)
+        if set.isSubset(of: selectedChecksums) {
+            selectedChecksums.subtract(set)
+        } else {
+            selectedChecksums.formUnion(set)
+        }
+    }
+
     // MARK: - Countdown helpers
 
     private func groupCountdown(_ group: PendingReviewGroup, isUnconfirmed: Bool) -> String? {
@@ -826,6 +901,9 @@ public struct PendingReviewScreen: View {
         case .approveVersion(_, let l): return "Move \(l) version to Trash now?"
         case .excludeVersion(_, let l): return "Exclude \(l) version from future runs?"
         case .dismissVersion(_, let l): return "Dismiss \(l) version?"
+        case .approveBatch(_, let n, _): return "Move all \(n) photos to Trash now?"
+        case .excludeBatch(_, let n, _): return "Exclude all \(n) photos from future runs?"
+        case .dismissBatch(_, let n, _): return "Dismiss all \(n) photos?"
         case .bulkOffload(let n): return "Exclude all \(n) recent deletions?"
         case .bulkApprove(let n): return "Move \(n) selected item\(n == 1 ? "" : "s") to Trash now?"
         case .bulkExcludeSelected(let n): return "Exclude \(n) selected item\(n == 1 ? "" : "s")?"
@@ -872,6 +950,12 @@ public struct PendingReviewScreen: View {
             return Text("Future runs will skip this version. The other versions in this group are unaffected.")
         case .dismissVersion:
             return Text("Removes this version from the pending list. Other versions in the group remain.")
+        case .approveBatch(_, let n, _):
+            return Text("Skips the quarantine wait for all \(n) photos in this batch. Immich keeps them in Trash for 30 days.")
+        case .excludeBatch(_, let n, _):
+            return Text("Future runs will skip all \(n). You can unexclude later from Settings.")
+        case .dismissBatch(_, let n, _):
+            return Text("Removes all \(n) from the pending list. If you delete the same photos again, they will reappear.")
         case .bulkOffload:
             return Text("All \(massOffloadCount) recent deletions will move to the excluded list. ") + .cairnWord + Text(" will stop considering them.")
         case .bulkApprove:
@@ -913,6 +997,15 @@ public struct PendingReviewScreen: View {
             Button("Cancel", role: .cancel) {}
         case .dismissVersion(let c, _):
             Button("Dismiss") { onDismiss([c]) }
+            Button("Cancel", role: .cancel) {}
+        case .approveBatch(_, _, let checksums):
+            Button("Move to Trash", role: .destructive) { onApprove(checksums) }
+            Button("Cancel", role: .cancel) {}
+        case .excludeBatch(_, _, let checksums):
+            Button("Exclude", role: .destructive) { onExclude(checksums) }
+            Button("Cancel", role: .cancel) {}
+        case .dismissBatch(_, _, let checksums):
+            Button("Dismiss") { onDismiss(checksums) }
             Button("Cancel", role: .cancel) {}
         case .bulkOffload:
             Button("Exclude all", role: .destructive) { onBulkExcludeOffload() }
@@ -1095,6 +1188,72 @@ extension PendingReviewScreen {
                 }
             }
         }
+    }
+}
+
+// MARK: - Same-day batch stacking
+
+extension PendingReviewScreen {
+    /// A same-day set of this many held groups (or more) collapses into a
+    /// single batch card. Below it, they stay as individual rows. Tuned so
+    /// a bulk delete folds up but a handful of same-day items don't.
+    static let batchStackThreshold = 5
+
+    /// A row in the Queued (held) section: either a single photo group,
+    /// or a "batch" of groups that all expire on the same calendar day
+    /// (a bulk delete). Batches keep one large deletion from dominating
+    /// the list and burying smaller sets expiring on other days.
+    enum HeldRow: Identifiable, Equatable {
+        case single(PendingReviewGroup)
+        case batch(id: String, groups: [PendingReviewGroup])
+
+        var id: String {
+            switch self {
+            case .single(let g): return "single-\(g.key.stableID)"
+            case .batch(let id, _): return id
+            }
+        }
+    }
+
+    /// Groups expiring on the same day collapse into a batch once they
+    /// reach `threshold`; smaller same-day sets stay as individual rows.
+    /// Input is assumed already sorted soonest-first (see `grouped()`), so
+    /// same-day groups are contiguous and the output preserves that order:
+    /// soonest-expiring rows first, batches sorted by their shared day.
+    static func heldRows(
+        _ groups: [PendingReviewGroup],
+        confirmedDeletedAt: [String: Date],
+        quarantineDays: Int,
+        threshold: Int = batchStackThreshold,
+        calendar: Calendar = .current
+    ) -> [HeldRow] {
+        let window = TimeInterval(quarantineDays) * 86_400
+        func expiryDay(_ g: PendingReviewGroup) -> Date? {
+            let stamps = g.versions.compactMap { confirmedDeletedAt[$0.checksum.base64] }
+            guard let earliest = stamps.min() else { return nil }
+            return calendar.startOfDay(for: earliest.addingTimeInterval(window))
+        }
+        var order: [Date] = []
+        var byDay: [Date: [PendingReviewGroup]] = [:]
+        // Held items always carry a confirmed-deleted stamp; a stampless
+        // group (defensive) is never batched — it renders as a single.
+        var stampless: [PendingReviewGroup] = []
+        for g in groups {
+            guard let day = expiryDay(g) else { stampless.append(g); continue }
+            if byDay[day] == nil { order.append(day); byDay[day] = [] }
+            byDay[day]?.append(g)
+        }
+        var rows: [HeldRow] = []
+        for day in order {
+            let dayGroups = byDay[day] ?? []
+            if dayGroups.count >= threshold {
+                rows.append(.batch(id: "batch-\(Int(day.timeIntervalSince1970))", groups: dayGroups))
+            } else {
+                rows.append(contentsOf: dayGroups.map(HeldRow.single))
+            }
+        }
+        rows.append(contentsOf: stampless.map(HeldRow.single))
+        return rows
     }
 }
 
@@ -1292,6 +1451,132 @@ private struct PendingReviewGroupRow: View {
         let isVideo = ["mov", "mp4", "m4v", "avi", "3gp"].contains(ext)
         if asset.livePhotoVideoId != nil { return "live-pair" }
         return isVideo ? "video" : "photo"
+    }
+}
+
+// MARK: - Batch row (same-day stack, collapsed header)
+
+/// Collapsed header for a same-day batch of held photos. Mirrors
+/// `PendingReviewGroupRow`'s layout — thumbnail, title, countdown,
+/// action chips, expand chevron — but represents N photos at once, and
+/// its chips act on the whole batch.
+private struct BatchRow: View {
+    let representative: ServerAsset?
+    let count: Int
+    let countdown: String?
+    let isExpanded: Bool
+    let selectionMode: Bool
+    let isSelected: Bool
+    let onToggleSelect: () -> Void
+    let onToggleExpand: () -> Void
+    let onApprove: () -> Void
+    let onExclude: () -> Void
+    let onDismiss: () -> Void
+
+    @Environment(\.cairnTokens) private var t
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            if selectionMode {
+                selectionIndicator
+            }
+            stackedThumb
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(count) photos")
+                    .font(.cairnScaled(size: 13, weight: .semibold))
+                    .foregroundStyle(t.text)
+                    .lineLimit(1)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Deleted together")
+                        .font(.cairnScaled(size: 11.5))
+                        .foregroundStyle(t.textMuted)
+                        .lineLimit(1)
+                    if let countdown {
+                        Text(countdown)
+                            .font(.cairnScaled(size: 11.5))
+                            .foregroundStyle(t.textMuted)
+                            .lineLimit(1)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            if !selectionMode {
+                HStack(spacing: 8) {
+                    RowIconButton(
+                        systemName: "trash",
+                        tone: .danger,
+                        accessibilityLabel: "Move all \(count) photos in this batch to Trash",
+                        action: onApprove
+                    )
+                    RowIconButton(
+                        systemName: "xmark.circle",
+                        tone: .neutral,
+                        accessibilityLabel: "Dismiss all \(count) photos in this batch",
+                        action: onDismiss
+                    )
+                    RowIconButton(
+                        systemName: "shield",
+                        tone: .neutral,
+                        accessibilityLabel: "Exclude all \(count) photos in this batch",
+                        action: onExclude
+                    )
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.cairnScaled(size: 12, weight: .semibold))
+                        .foregroundStyle(t.textMuted)
+                        .frame(width: 32, height: 28)
+                }
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if selectionMode { onToggleSelect() } else { onToggleExpand() }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(count) photos deleted together")
+    }
+
+    /// Representative thumbnail with a "stack" hint behind it and a count
+    /// badge — reads as "there are more like this" at a glance.
+    private var stackedThumb: some View {
+        ZStack(alignment: .topTrailing) {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(t.surfaceAlt)
+                .frame(width: 44, height: 44)
+                .offset(x: 4, y: 4)
+            ImmichAssetThumb(
+                assetId: representative?.id,
+                filename: representative?.originalFileName ?? "batch",
+                size: 44,
+                isLivePair: representative?.livePhotoVideoId != nil
+            )
+            Text("\(count)")
+                .font(.cairnScaled(size: 10, weight: .bold))
+                .monospacedDigit()
+                .foregroundStyle(.white)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 1)
+                .background(Capsule().fill(t.pendingInk))
+                .offset(x: 6, y: -6)
+        }
+        .frame(width: 50, height: 50, alignment: .topLeading)
+    }
+
+    private var selectionIndicator: some View {
+        ZStack {
+            Circle()
+                .strokeBorder(isSelected ? t.primary : t.divider, lineWidth: isSelected ? 0 : 1)
+                .background(Circle().fill(isSelected ? t.primary : .clear))
+                .frame(width: 22, height: 22)
+            if isSelected {
+                Image(systemName: "checkmark")
+                    .font(.cairnScaled(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+        }
+        .accessibilityLabel(isSelected ? "Selected" : "Not selected")
     }
 }
 
