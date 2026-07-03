@@ -6752,13 +6752,6 @@ final class AppDependencies {
             model.library = CairnFixtures.LibrarySize(
                 local: 20, indexed: 20, server: 25, matched: 25, candidates: 5
             )
-            let confirmedAt: [Checksum: Date] = Dictionary(
-                uniqueKeysWithValues: demoCandidates.enumerated().compactMap { idx, c in
-                    c.checksum.map {
-                        (Checksum(base64: $0), Date(timeIntervalSinceNow: -TimeInterval(idx) * 60))
-                    }
-                }
-            )
             // `heldByQuarantineCandidates` is a subset of
             // `pendingReviewCandidates` (the engine always populates both
             // — see `LiveReconciliation`). Pose them as the same set here:
@@ -6767,6 +6760,16 @@ final class AppDependencies {
             // so leaving the superset empty hid the line and broke the
             // demo's Pending Review navigation.
             let demoHeld = demoCandidates.map(\.asServerAsset)
+            // Key confirmed-deleted stamps off the held assets' own
+            // checksums (not the fixtures' optional `checksum`, which is
+            // nil for synthetic candidates and so never matched) — so the
+            // per-item countdown and same-day batch stacking actually
+            // resolve. Stamps a few minutes apart on the same day.
+            let confirmedAt: [Checksum: Date] = Dictionary(
+                uniqueKeysWithValues: demoHeld.enumerated().map { idx, asset in
+                    (asset.checksum, Date(timeIntervalSinceNow: -TimeInterval(idx) * 60))
+                }
+            )
             model.reconciliation = .init(
                 deleteCandidates: [],
                 pendingReviewCandidates: demoHeld,
