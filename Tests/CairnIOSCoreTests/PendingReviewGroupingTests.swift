@@ -91,7 +91,8 @@ struct PendingReviewGroupingTests {
         ]
         let groups = Group.grouped(assets)
         #expect(groups.count == 4)
-        // Ordering preserves first-appearance: A (the pair), B, C, D.
+        // No confirmed-deleted stamps here, so cross-group order falls to
+        // the representative-id tiebreak: a1 < b < c < d → A, B, C, D.
         let names = groups.map { Self.filenameInKey($0.key) }
         #expect(names == ["A.HEIC", "B.HEIC", "C.HEIC", "D.HEIC"])
         // The A group has both versions.
@@ -313,6 +314,47 @@ struct PendingReviewGroupingTests {
         )
         #expect(groups.count == 1)
         #expect(groups[0].key == .bySourceId("phasset/shared"))
+    }
+
+    @Test("cross-group order is soonest-to-trash first, independent of input order")
+    func soonestEligibleGroupSortsFirst() {
+        let ckEarly = Checksum(base64: "ck-early")
+        let ckLate = Checksum(base64: "ck-late")
+        // "later" (d2) appears FIRST in the input; "earlier" (d1) second.
+        // A stable-but-input-order sort would keep them in this order —
+        // the soonest-first sort must flip them.
+        let assets = [
+            Self.asset("z-late", checksum: ckLate.base64, name: "LATE.HEIC", date: Self.d2),
+            Self.asset("a-early", checksum: ckEarly.base64, name: "EARLY.HEIC", date: Self.d1),
+        ]
+        let confirmed: [Checksum: Date] = [
+            ckEarly: Self.d1,          // eligible sooner
+            ckLate: Self.d2,           // eligible later
+        ]
+        let groups = Group.grouped(assets, confirmedDeletedAt: confirmed)
+        #expect(groups.count == 2)
+        #expect(Self.filenameInKey(groups[0].key) == "EARLY.HEIC")
+        #expect(Self.filenameInKey(groups[1].key) == "LATE.HEIC")
+    }
+
+    @Test("cross-group order is stable across repeated grouping of shuffled input")
+    func groupOrderIsDeterministic() {
+        let ckA = Checksum(base64: "ck-aaa")
+        let ckB = Checksum(base64: "ck-bbb")
+        let ckC = Checksum(base64: "ck-ccc")
+        let confirmed: [Checksum: Date] = [ckA: Self.d1, ckB: Self.d1, ckC: Self.d1]
+        // Same three assets, same stamps, two different input orders.
+        let order1 = [
+            Self.asset("aaa", checksum: ckA.base64, name: "A.HEIC", date: Self.d1),
+            Self.asset("bbb", checksum: ckB.base64, name: "B.HEIC", date: Self.d1),
+            Self.asset("ccc", checksum: ckC.base64, name: "C.HEIC", date: Self.d1),
+        ]
+        let order2 = [order1[2], order1[0], order1[1]]
+        let g1 = Group.grouped(order1, confirmedDeletedAt: confirmed).map(\.versions.first?.id)
+        let g2 = Group.grouped(order2, confirmedDeletedAt: confirmed).map(\.versions.first?.id)
+        // Identical (id-tiebreak) regardless of the shuffled input order.
+        #expect(g1 == ["aaa", "bbb", "ccc"])
+        #expect(g1 == g2)
     }
 
     @Test("empty input still produces empty groups when source-id map is provided")

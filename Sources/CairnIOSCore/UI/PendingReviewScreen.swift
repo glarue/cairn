@@ -1054,7 +1054,7 @@ extension PendingReviewScreen {
                     buckets[key]?.append(asset)
                 }
             }
-            return orderedKeys.map { key in
+            let groups = orderedKeys.map { key -> PendingReviewGroup in
                 let versions = buckets[key, default: []]
                 let sorted = versions.sorted { lhs, rhs in
                     let lAnchored = firstObservedAnchors.contains(lhs.checksum)
@@ -1075,6 +1075,24 @@ extension PendingReviewScreen {
                     versions: sorted,
                     firstObservedChecksums: anchored
                 )
+            }
+            // Deterministic display order: soonest-to-trash first (the
+            // earliest confirmed-deleted stamp among a group's versions),
+            // then the representative asset id as a stable tiebreak.
+            // Without this the order followed the input array, which is
+            // assembled from unordered sources (Dictionary/Set iteration in
+            // the reconciliation rebuild), so the list reshuffled on every
+            // reload. Sorting soonest-first also puts the item the Status
+            // "next in N days" banner counts down to at the top.
+            return groups.sorted { lhs, rhs in
+                let lStamp = lhs.versions.compactMap { confirmedDeletedAt[$0.checksum] }.min()
+                let rStamp = rhs.versions.compactMap { confirmedDeletedAt[$0.checksum] }.min()
+                switch (lStamp, rStamp) {
+                case let (l?, r?) where l != r: return l < r
+                case (.some, .none): return true
+                case (.none, .some): return false
+                default: return (lhs.versions.first?.id ?? "") < (rhs.versions.first?.id ?? "")
+                }
             }
         }
     }
