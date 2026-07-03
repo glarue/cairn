@@ -1,9 +1,5 @@
-0.4.3 (build 145) — tidier quarantine queue, and a couple of countdown fixes.
+0.4.3 (build 146) — batch card no longer clips its text.
 
-Big deletions no longer bury the rest. When a bunch of photos are queued to expire on the same day (a bulk delete), they now stack into a single "N photos" card in Pending Review instead of a long run of individual rows. Tap it to expand and review or act on them one by one; the trash/exclude/dismiss chips on the card act on the whole batch. Smaller same-day sets still show as individual cards.
+Follow-up to the same-day batch stacking from the last build: the "N photos" card in Pending Review was clipping the photo count and the countdown when the action buttons crowded the row ("5 ph…" / "Trashes in…"). It's now laid out over two lines, so "5 photos" and "Trashes in N days" always show in full, with the trash / dismiss / exclude buttons on their own row below. Same behavior, nothing cut off.
 
-Two countdown fixes:
-- The quarantine list no longer reshuffles its order when you reopen the app — it now sorts soonest-to-trash first, consistently.
-- The Status "next in N days" banner now matches the countdown shown on the photo cards in the drill-down (they could disagree by a day before).
-
-To test: if you have items in quarantine, reopen the app a few times and confirm the order stays put. Compare the "next in N days" on the Status card to the soonest item inside Pending Review — they should match. If you have 5+ photos deleted on the same day, confirm they appear as one stacked card that expands.
+To test: with 5+ photos deleted on the same day, open Pending Review and confirm the batch card shows the count and countdown in full, and the batch action buttons (and tap-to-expand) still work.
