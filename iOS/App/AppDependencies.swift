@@ -4423,7 +4423,22 @@ final class AppDependencies {
                     )
                     let trashedCount = result.trashedAssetIds.count
                     await MainActor.run {
-                        self.model.reconciliation = nil
+                        // Prune ONLY the trashed candidates from the
+                        // reconciliation — not the whole thing. Nil-ing it
+                        // (the prior behavior) also dropped the still-valid
+                        // held-by-quarantine / pending-review buckets, so
+                        // the Status quarantine banner vanished until the
+                        // next sync even though those items remained.
+                        // Mirrors the prune in `handleTrashFailure`.
+                        let trashedIds = Set(result.trashedAssetIds)
+                        let trashedChecksums = Set(
+                            live.deleteCandidates
+                                .filter { trashedIds.contains($0.id) }
+                                .map(\.checksum)
+                        )
+                        if let existing = self.model.reconciliation {
+                            self.model.reconciliation = existing.removing(checksums: trashedChecksums)
+                        }
                         // Reset acknowledged set: trashed candidates'
                         // checksums are no longer relevant. Pairs with
                         // CairnAppRoot.presentDryRunSheet's subset
