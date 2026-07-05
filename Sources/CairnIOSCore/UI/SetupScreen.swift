@@ -842,17 +842,17 @@ public struct SetupScreen: View {
                     .init(
                         value: DeletionStrictness.strict,
                         title: "Cautious",
-                        subtitle: "Only move a server photo to Immich's Trash when iOS directly confirmed it was deleted on this device. Anything else gets held for your review. Recommended with iCloud Photo Library and iCloud-Optimized Storage."
+                        subtitle: "Nothing is trashed without your say-so. When iOS confirms a deletion the photo becomes Ready to trash for you to confirm; anything unconfirmed waits in Pending Review. Recommended with iCloud Photo Library and iCloud-Optimized Storage."
                     ),
                     .init(
                         value: DeletionStrictness.trusting,
                         title: "Balanced",
-                        subtitle: "Move any server photo to Immich's Trash when it's no longer on your device, even if iOS didn't directly confirm the deletion. Faster, but can accidentally send photos to Trash during iCloud sync hiccups or library restores."
+                        subtitle: "After the quarantine window, cairn moves matching server photos to Immich's Trash automatically — no tap needed — as long as the run stays within your safety limits. Anything over the limit is left for you to review. The default."
                     ),
                     .init(
                         value: DeletionStrictness.autonomous,
                         title: "Autonomous",
-                        subtitle: "Skip quarantine and review entirely. Every candidate moves to Immich's Trash on the next sync — no waiting, no preview list. The only safety net is Immich's 30-day Trash window. Pick this only if you'd rather catch mistakes after the fact than pre-approve every batch."
+                        subtitle: "Skip the quarantine wait and confirmation. Every detected deletion moves to Immich's Trash on the next sync (still within your safety limits). The only safety net is Immich's 30-day Trash window. Pick this only if you'd rather catch mistakes after the fact."
                     ),
                 ]
             )

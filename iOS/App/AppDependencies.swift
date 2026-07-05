@@ -2770,6 +2770,20 @@ final class AppDependencies {
             model.settings.keepScreenAwakeDuringSync = false
             Task { try? await self.settingsStore.save(self.model.settings) }
         }
+        // Auto-trash the ready-to-trash candidates now, if the strictness
+        // setting opts in (Balanced / Autonomous) and the safety rails
+        // pass. Cautious leaves everything for manual confirmation. This
+        // runs on every sync (foreground catch-up and background refresh),
+        // so eligible deletions propagate without a tap. Prunes the
+        // reconciliation + library counts in place, so the snapshot below
+        // reflects the post-trash state.
+        await autoTrashIfEligible(
+            result: result,
+            serverNonTrashed: serverNonTrashed,
+            localCount: totalVisibleAssets,
+            isFirstRun: wasFirstScanCompletion
+        )
+
         model.lastCheckedAt = model.reconciliation?.computedAt
         await persistSnapshotFromModel()
 
@@ -3184,6 +3198,95 @@ final class AppDependencies {
         await refreshRunsList()
         await refreshJournalTail()
         await refreshPendingTrashCount()
+    }
+
+    /// Auto-trash the ready-to-trash candidates a sync just surfaced, when
+    /// the strictness setting opts in and the safety rails pass. Called at
+    /// the end of `performLiveReconciliation`.
+    ///
+    /// - `.strict` (Cautious): never auto-trashes — always manual.
+    /// - `.trusting` (Balanced): past-quarantine candidates auto-trash.
+    /// - `.autonomous` (Autonomous): candidates auto-trash immediately (no
+    ///   quarantine wait — the engine already put them straight into
+    ///   `deleteCandidates`).
+    ///
+    /// The safety rails (percent cap + count floor from Settings, plus the
+    /// first-run / empty-library guards) gate the run exactly as a manual
+    /// trash would. On a rail **abort**, cairn does NOT auto-delete: the
+    /// candidates stay surfaced as "Ready to trash" for the user to review
+    /// and confirm manually. Everything moves to Immich's Trash (30-day
+    /// recovery), same as a manual run.
+    @MainActor
+    private func autoTrashIfEligible(
+        result: ReconciliationOutput,
+        serverNonTrashed: Int,
+        localCount: Int,
+        isFirstRun: Bool
+    ) async {
+        let strictness = model.settings.deletionStrictness
+        guard strictness.autoTrashesEligibleCandidates else { return }
+        guard !result.deleteCandidates.isEmpty else { return }
+        guard let client = immichClient, let journal else { return }
+
+        let config = SafetyConfig(
+            maxDeletePercent: model.settings.maxDeletePercent / 100.0,
+            minDeleteCountForThreshold: model.settings.minDeleteFloor
+        )
+        let decision = SafetyRails.evaluate(
+            reconciliation: result,
+            totalServerAssets: serverNonTrashed,
+            currentLocalCount: localCount,
+            isFirstRun: isFirstRun,
+            isDryRun: false,
+            config: config
+        )
+        guard case .proceed = decision else {
+            if case .abort(let reason) = decision {
+                syncLog.notice("[cairn.autotrash] safety rail refused auto-trash (\(String(describing: reason), privacy: .public)); \(result.deleteCandidates.count, privacy: .public) candidate(s) left for manual review")
+            }
+            return
+        }
+
+        let candidates = result.deleteCandidates
+        let assetsInPurview = candidates.count + result.pendingReviewCandidates.count
+        let runId = "\(ISO8601DateFormatter().string(from: Date()))-\(UUID().uuidString.prefix(8))"
+        let orchestrator = TrashOrchestrator(writer: client, journal: journal)
+        do {
+            let trashResult = try await orchestrator.run(
+                runId: runId,
+                candidates: candidates,
+                assetsInPurview: assetsInPurview,
+                dryRun: false
+            )
+            let trashedIds = Set(trashResult.trashedAssetIds)
+            let trashedChecksums = Set(candidates.filter { trashedIds.contains($0.id) }.map(\.checksum))
+            if let existing = model.reconciliation {
+                model.reconciliation = existing.removing(checksums: trashedChecksums)
+            }
+            let trashedCount = trashedChecksums.count
+            if trashedCount > 0 {
+                let current = model.library
+                model.library = current.with(
+                    server: max(0, current.server - trashedCount),
+                    matched: max(0, current.matched - trashedCount),
+                    candidates: max(0, current.candidates - trashedCount)
+                )
+            }
+            model.recordSyncSuccess()
+            syncLog.notice("[cairn.autotrash] auto-trashed \(trashedCount, privacy: .public) candidate(s) under \(String(describing: strictness), privacy: .public) strictness")
+            await refreshRunsList()
+            await refreshJournalTail()
+        } catch {
+            // A failed auto-trash is queued for retry (drainPendingTrashes)
+            // and the candidates pruned from view — the strictness setting
+            // is a standing decision to trash, same as a manual confirm.
+            await handleTrashFailure(
+                runId: runId,
+                candidates: candidates,
+                assetsInPurview: assetsInPurview,
+                error: error
+            )
+        }
     }
 
     /// Refresh `model.pendingTrashCount` and `pendingTrashStuckCount`

@@ -2170,9 +2170,9 @@ private struct StrictnessRow: View {
                     .font(.cairnScaled(size: 15))
                     .foregroundStyle(t.textBody)
                 HelpPopover {
-                    Text("**Cautious** requires a positive deletion signal before trashing. Ambiguous candidates go to Pending Review.")
-                    Text("**Balanced** trashes past-quarantine candidates automatically. Held deletions still wait out the window.")
-                    Text("**Autonomous** skips quarantine entirely. Every candidate trashes on the next sync. Rely on Immich's 30-day Trash for recovery.")
+                    Text("**Cautious** — nothing is trashed automatically. Confirmed deletions surface as Ready to trash, and anything unconfirmed goes to Pending Review, for you to confirm by hand.")
+                    Text("**Balanced** — past-quarantine deletions are trashed automatically on the next sync, as long as the run stays within your safety limits. Held deletions still wait out the window; anything over the limit is left for you to review.")
+                    Text("**Autonomous** — deletions are trashed automatically on the next sync with no quarantine wait (still within your safety limits). Rely on Immich's 30-day Trash for recovery.")
                 }
                 Spacer()
             }
@@ -2196,11 +2196,11 @@ private struct StrictnessRow: View {
     private var explanation: String {
         switch strictness {
         case .strict:
-            return "Past-quarantine candidates wait in pending review if there's no positive deletion signal."
+            return "Nothing is trashed automatically — deletions wait as Ready to trash for you to confirm, and unconfirmed items go to Pending Review."
         case .trusting:
-            return "Past-quarantine candidates move to Immich's Trash automatically. Held deletions still wait out the quarantine window."
+            return "Past-quarantine deletions move to Immich's Trash automatically on sync, within your safety limits. Held deletions still wait out the quarantine window."
         case .autonomous:
-            return "All candidates move to Immich's Trash on sync. No quarantine, no review. Immich keeps items in Trash for 30 days."
+            return "Deletions move to Immich's Trash automatically on sync — no quarantine, no confirmation (within your safety limits). Immich keeps items in Trash for 30 days."
         }
     }
 }

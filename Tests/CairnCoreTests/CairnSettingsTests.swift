@@ -18,6 +18,15 @@ struct CairnSettingsTests {
         #expect(d.iCloudMaxEverBytesMB == nil)
     }
 
+    @Test("auto-trash eligibility: Cautious is manual, Balanced + Autonomous auto-trash")
+    func autoTrashEligibility() {
+        #expect(DeletionStrictness.strict.autoTrashesEligibleCandidates == false)
+        #expect(DeletionStrictness.trusting.autoTrashesEligibleCandidates == true)
+        #expect(DeletionStrictness.autonomous.autoTrashesEligibleCandidates == true)
+        // The default is Balanced, so auto-trash is on out of the box.
+        #expect(CairnSettings.defaults.deletionStrictness.autoTrashesEligibleCandidates == true)
+    }
+
     @Test("quarantineDaysRange covers the documented 0...90 span")
     func quarantineDaysRangeIsDocumented() {
         #expect(CairnSettings.quarantineDaysRange == 0...90)

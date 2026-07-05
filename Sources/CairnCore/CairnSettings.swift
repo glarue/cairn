@@ -633,6 +633,18 @@ public enum DeletionStrictness: String, Sendable, Codable, Equatable, CaseIterab
     case strict
     case trusting
     case autonomous
+
+    /// Whether cairn auto-trashes ready-to-trash candidates on each sync
+    /// under this level (still gated by the safety rails), rather than
+    /// leaving them for manual confirmation. `.strict` (Cautious) is
+    /// manual-only; `.trusting` (Balanced, after the quarantine window)
+    /// and `.autonomous` (Autonomous, immediately) auto-trash.
+    public var autoTrashesEligibleCandidates: Bool {
+        switch self {
+        case .strict: return false
+        case .trusting, .autonomous: return true
+        }
+    }
 }
 
 /// Narrow protocol over settings persistence. The iOS target may back
