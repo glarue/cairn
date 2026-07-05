@@ -1,5 +1,13 @@
-0.4.3 (build 146) — batch card no longer clips its text.
+0.4.3 (build 147) — automatic trashing (opt-in), and a quarantine fix.
 
-Follow-up to the same-day batch stacking from the last build: the "N photos" card in Pending Review was clipping the photo count and the countdown when the action buttons crowded the row ("5 ph…" / "Trashes in…"). It's now laid out over two lines, so "5 photos" and "Trashes in N days" always show in full, with the trash / dismiss / exclude buttons on their own row below. Same behavior, nothing cut off.
+Big one this build: cairn can now move deletions to Immich's Trash automatically, without a manual "Trash all" tap. This is OPT-IN and gated by your safety limits.
 
-To test: with 5+ photos deleted on the same day, open Pending Review and confirm the batch card shows the count and countdown in full, and the batch action buttons (and tap-to-expand) still work.
+- Please check Settings → Safety & limits → Deletion strictness. If you were on Balanced or Autonomous, this build resets you to Cautious (manual) one time — because no previous version ever auto-deleted, we don't want to switch anyone into automatic deletion silently. Re-select Balanced or Autonomous to turn auto-trashing on.
+- Cautious (the new default): nothing is trashed automatically — deletions wait as "Ready to trash" for you to confirm.
+- Balanced: past-quarantine deletions are trashed automatically on the next sync.
+- Autonomous: deletions are trashed automatically with no quarantine wait.
+- In all cases it's gated by your percent + count safety limits: a run that would exceed them (or a first sync) is NOT auto-deleted — it's left for you to review. Everything goes to Immich's Trash (30-day recovery), and auto-trash runs on background refresh too.
+
+Also fixed: trashing the "Ready to trash" list no longer makes the quarantine banner disappear until the next sync — it now stays accurate immediately.
+
+To test: confirm your strictness is Cautious after updating. Then, if you want auto-trash, set Balanced or Autonomous, delete a few photos on your phone, and after the quarantine window (or immediately, for Autonomous) confirm they move to Immich's Trash on the next sync without a tap. Try a large deletion to confirm the safety limit still holds it back for manual review.
