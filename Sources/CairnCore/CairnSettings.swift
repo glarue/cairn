@@ -318,7 +318,7 @@ public struct CairnSettings: Sendable, Codable, Equatable {
         minDeleteFloor: Int = 5,
         notifyOnAbort: Bool = true,
         verboseLogging: Bool = false,
-        deletionStrictness: DeletionStrictness = .trusting,
+        deletionStrictness: DeletionStrictness = .strict,
         quarantineDays: Int = 14,
         iCloudDownloadLimitMB: Int = 100,
         iCloudMaxEverBytesMB: Int? = nil,
@@ -607,18 +607,24 @@ public enum AppearanceOverride: String, Sendable, Codable, Equatable, CaseIterab
 /// How aggressively cairn translates "no longer in the local library"
 /// into "trash on the server."
 ///
+/// Also gates whether cairn auto-trashes eligible candidates on sync
+/// (see `autoTrashesEligibleCandidates`): `.strict` never does,
+/// `.trusting` and `.autonomous` do (within the safety rails).
+///
 /// `.strict` requires a positive deletion signal — a
 /// `PHPhotoLibrary.fetchPersistentChanges` event that named the
 /// checksum's `localIdentifier` as deleted — before any candidate is
 /// trashed. Diff-discovered candidates that lack the positive signal
-/// are held in pending review for manual approval. The right choice
-/// for users who want both signals required in parallel.
+/// are held in pending review for manual approval, and nothing is
+/// trashed without an explicit user confirmation. The default (made so
+/// once auto-trash landed, so auto-deletion is opt-in): the safest
+/// choice, and the right one for users who want both signals in parallel.
 ///
 /// `.trusting` skips the positive-signal gate. Any diff-discovered
 /// candidate flows through the normal pipeline, gated only by the
-/// quarantine window. The default since Wave 4b — quarantine alone
-/// gives a large recovery margin without blocking happy-path users
-/// behind a "pending review" queue.
+/// quarantine window — and once past it, auto-trashes on the next sync
+/// (within the safety rails). Quarantine alone gives a large recovery
+/// margin without a "pending review" queue.
 ///
 /// `.autonomous` also skips the quarantine wait. Every diff-discovered
 /// candidate is eligible to trash immediately on the next run — no

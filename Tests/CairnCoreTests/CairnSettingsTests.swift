@@ -12,7 +12,7 @@ struct CairnSettingsTests {
         #expect(d.minDeleteFloor == 5)
         #expect(d.notifyOnAbort == true)
         #expect(d.verboseLogging == false)
-        #expect(d.deletionStrictness == .trusting)
+        #expect(d.deletionStrictness == .strict)
         #expect(d.quarantineDays == 14)
         #expect(d.iCloudDownloadLimitMB == 100)
         #expect(d.iCloudMaxEverBytesMB == nil)
@@ -23,8 +23,9 @@ struct CairnSettingsTests {
         #expect(DeletionStrictness.strict.autoTrashesEligibleCandidates == false)
         #expect(DeletionStrictness.trusting.autoTrashesEligibleCandidates == true)
         #expect(DeletionStrictness.autonomous.autoTrashesEligibleCandidates == true)
-        // The default is Balanced, so auto-trash is on out of the box.
-        #expect(CairnSettings.defaults.deletionStrictness.autoTrashesEligibleCandidates == true)
+        // The default is Cautious, so auto-trash is OFF out of the box —
+        // deleting server photos automatically is opt-in.
+        #expect(CairnSettings.defaults.deletionStrictness.autoTrashesEligibleCandidates == false)
     }
 
     @Test("quarantineDaysRange covers the documented 0...90 span")
