@@ -720,6 +720,25 @@ final class AppDependencies {
         model.hasSessionToken = (try? secretStore.sessionToken()) != nil
         model.settings = (try? await settingsStore.load()) ?? .defaults
 
+        // One-time auto-trash opt-out migration. Auto-trash (Balanced /
+        // Autonomous auto-deleting eligible candidates on sync) is new;
+        // no prior shipped build ever auto-trashed, so a user sitting on
+        // Balanced/Autonomous never consented to auto-deletion. On the
+        // first launch of the build that introduces auto-trash, reset any
+        // auto-trashing strictness back to Cautious so nobody is silently
+        // switched into automatic deletion — they re-opt-in from Settings.
+        // Gated by a UserDefaults flag so it runs exactly once (and never
+        // stomps a deliberate re-selection made afterward).
+        let autoTrashMigrationKey = "cairn.migration.autotrash_optout_v1"
+        if !UserDefaults.standard.bool(forKey: autoTrashMigrationKey) {
+            if model.settings.deletionStrictness.autoTrashesEligibleCandidates {
+                model.settings.deletionStrictness = .strict
+                try? await settingsStore.save(model.settings)
+                syncLog.notice("[cairn.migration] reset auto-trashing strictness to Cautious on first auto-trash build launch (auto-deletion is now opt-in)")
+            }
+            UserDefaults.standard.set(true, forKey: autoTrashMigrationKey)
+        }
+
         // Start the persistent diagnostic-log flusher only if the user has
         // opted in. Off by default, so the 20s OSLog poll + rolling-file
         // writes don't run on every launch — they're for active bug
