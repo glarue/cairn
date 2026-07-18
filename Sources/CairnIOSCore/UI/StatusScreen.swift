@@ -551,7 +551,7 @@ public struct StatusScreen: View {
     private var reconcilingSubhead: AttributedString {
         var s = AttributedString("reconciling ")
         s.foregroundColor = t.textMuted
-        var device = AttributedString("iPhone 15 Pro")
+        var device = AttributedString("this device")
         device.foregroundColor = t.textBody
         var middle = AttributedString(" against ")
         middle.foregroundColor = t.textMuted
