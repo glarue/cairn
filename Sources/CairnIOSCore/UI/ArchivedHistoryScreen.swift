@@ -28,11 +28,11 @@ public struct ArchivedHistoryScreen: View {
     public var body: some View {
         NavigationStack {
             content
-                .navigationTitle("Archived history")
+                .navigationTitle("Archived history".loc)
                 .cairnNavigationTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Done") { dismiss() }
+                        Button("Done".loc) { dismiss() }
                     }
                 }
         }
@@ -62,14 +62,21 @@ public struct ArchivedHistoryScreen: View {
                             .onTapGesture { detail = row }
                     }
                 } header: {
-                    Text("\(rows.count) archived event\(rows.count == 1 ? "" : "s") · newest first")
+                    Text(CairnL10n.isChinese ? "\(rows.count) 条归档事件 · 最新的排在前面" : "\(rows.count) archived event\(rows.count == 1 ? "" : "s") · newest first")
                         .font(.cairnScaled(size: 11))
                         .foregroundStyle(t.textHint)
                 } footer: {
-                    Text("cairn moves older runs here automatically once your live history passes about 500 runs. Nothing is deleted — restore still reaches archived runs, and Export includes them.")
-                        .font(.cairnScaled(size: 11))
-                        .foregroundStyle(t.textHint)
-                        .padding(.top, 4)
+                    if CairnL10n.isChinese {
+                        (Text("当活跃历史超过约 500 次运行时，") + .cairnWord + Text(" 会自动将较早的运行记录移至此处。不会删除任何内容 — 还原仍可处理归档运行，导出备份也包含它们。"))
+                            .font(.cairnScaled(size: 11))
+                            .foregroundStyle(t.textHint)
+                            .padding(.top, 4)
+                    } else {
+                        Text("cairn moves older runs here automatically once your live history passes about 500 runs. Nothing is deleted — restore still reaches archived runs, and Export includes them.")
+                            .font(.cairnScaled(size: 11))
+                            .foregroundStyle(t.textHint)
+                            .padding(.top, 4)
+                    }
                 }
             }
             .listStyle(.plain)
@@ -81,15 +88,24 @@ public struct ArchivedHistoryScreen: View {
             Image(systemName: "archivebox")
                 .font(.system(size: 34, weight: .light))
                 .foregroundStyle(t.textHint)
-            Text("Nothing archived yet")
+            Text("Nothing archived yet".loc)
                 .font(.cairnScaled(size: 15, weight: .semibold))
                 .foregroundStyle(t.text)
-            Text("cairn keeps your most recent ~500 runs in the live history (Status and Runs). Older runs move here automatically — none are deleted.")
-                .font(.cairnScaled(size: 13))
-                .foregroundStyle(t.textMuted)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 32)
+            if CairnL10n.isChinese {
+                (Text.cairnWord + Text(" 会在活跃历史（状态和运行记录）中保留最近约 500 次运行。较早的运行会自动移至此处 — 不会删除任何内容。"))
+                    .font(.cairnScaled(size: 13))
+                    .foregroundStyle(t.textMuted)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 32)
+            } else {
+                Text("cairn keeps your most recent ~500 runs in the live history (Status and Runs). Older runs move here automatically — none are deleted.")
+                    .font(.cairnScaled(size: 13))
+                    .foregroundStyle(t.textMuted)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 32)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -160,7 +176,7 @@ private struct ArchivedRawJSONSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                Text(entry.rawJSON ?? "No raw event data for this row.")
+                Text(entry.rawJSON ?? "No raw event data for this row.".loc)
                     .font(.cairnScaled(size: 12, design: .monospaced))
                     .foregroundStyle(t.text)
                     .textSelection(.enabled)
@@ -171,7 +187,7 @@ private struct ArchivedRawJSONSheet: View {
             .cairnNavigationTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
+                    Button("Done".loc) { dismiss() }
                 }
             }
         }

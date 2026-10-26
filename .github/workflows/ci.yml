@@ -37,6 +37,11 @@ jobs:
       - name: swift build
         run: swift build
 
+      - name: Localization startup regression (strict)
+        # Run separately without the legacy SIGTRAP tolerance below: a
+        # dictionary-initialization trap must never be mistaken for teardown.
+        run: swift test --filter CairnLocalizationTests
+
       - name: swift test
         # Tolerate the known swift-testing teardown crash (swiftpm-testing-
         # helper SIGTRAPs on exit — "unexpected signal code 5" — AFTER the

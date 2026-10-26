@@ -81,12 +81,12 @@ public struct AlbumPickerSheet: View {
 
     private var header: some View {
         HStack {
-            Button("Cancel", action: onClose)
+            Button("Cancel".loc, action: onClose)
                 .font(.cairnScaled(size: 15))
                 .foregroundStyle(t.textBody)
             Spacer()
             VStack(spacing: 1) {
-                Text("Selected albums")
+                Text("Selected albums".loc)
                     .font(.cairnScaled(size: 15, weight: .semibold))
                     .foregroundStyle(t.text)
                 Text(selectionSummary)
@@ -95,7 +95,7 @@ public struct AlbumPickerSheet: View {
                     .monospacedDigit()
             }
             Spacer()
-            Button("Done") {
+            Button("Done".loc) {
                 onSave(selection)
                 onClose()
             }
@@ -116,9 +116,9 @@ public struct AlbumPickerSheet: View {
     private var selectionSummary: String {
         let n = selection.count
         switch n {
-        case 0: return "Pick at least one"
-        case 1: return "1 album selected"
-        default: return "\(n) albums selected"
+        case 0: return "Pick at least one".loc
+        case 1: return CairnL10n.isChinese ? "已选择 1 个相册" : "1 album selected"
+        default: return CairnL10n.isChinese ? "已选择 \(n) 个相册" : "\(n) albums selected"
         }
     }
 
@@ -141,7 +141,7 @@ public struct AlbumPickerSheet: View {
     private var loadingState: some View {
         VStack(spacing: 12) {
             ProgressView()
-            Text("Loading albums…")
+            Text("Loading albums…".loc)
                 .font(.cairnScaled(size: 13))
                 .foregroundStyle(t.textMuted)
         }
@@ -153,10 +153,10 @@ public struct AlbumPickerSheet: View {
             Image(systemName: "lock")
                 .font(.cairnScaled(size: 28))
                 .foregroundStyle(t.textMuted)
-            Text("Photos access required")
+            Text("Photos access required".loc)
                 .font(.cairnScaled(size: 15, weight: .semibold))
                 .foregroundStyle(t.text)
-            Text("Grant Full Photos access in Settings → cairn → Photos to pick albums.")
+            Text("Grant Full Photos access in Settings → cairn → Photos to pick albums.".loc)
                 .font(.cairnScaled(size: 13))
                 .foregroundStyle(t.textMuted)
                 .multilineTextAlignment(.center)
@@ -170,10 +170,10 @@ public struct AlbumPickerSheet: View {
             Image(systemName: "rectangle.stack")
                 .font(.cairnScaled(size: 28))
                 .foregroundStyle(t.textMuted)
-            Text("No user-created albums")
+            Text("No user-created albums".loc)
                 .font(.cairnScaled(size: 15, weight: .semibold))
                 .foregroundStyle(t.text)
-            Text("Create an album in Photos.app to scope cairn to it.")
+            Text("Create an album in Photos.app to scope cairn to it.".loc)
                 .font(.cairnScaled(size: 13))
                 .foregroundStyle(t.textMuted)
                 .multilineTextAlignment(.center)
@@ -231,7 +231,7 @@ public struct AlbumPickerSheet: View {
     }
 
     private func assetCountLabel(_ n: Int) -> String {
-        n == 1 ? "1 photo" : "\(n) photos"
+        CairnL10n.isChinese ? "\(n) 张照片" : (n == 1 ? "1 photo" : "\(n) photos")
     }
 
     private func toggle(_ id: String) {

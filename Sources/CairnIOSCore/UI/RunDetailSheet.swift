@@ -184,10 +184,12 @@ public struct RunDetailSheet: View {
             return abortedClassification.headerTitle
         }
         if run.status == .restored {
+            if CairnL10n.isChinese { return "已恢复 \(run.restored) 项照片" }
             let suffix = run.restored == 1 ? "" : "s"
             return "\(run.restored) asset\(suffix) restored"
         }
-        if run.dryRun { return "Preview only — nothing touched" }
+        if run.dryRun { return "Preview only — nothing touched".loc }
+        if CairnL10n.isChinese { return "已将 \(run.trashed) 项照片移入废纸篓" }
         let suffix = run.trashed == 1 ? "" : "s"
         return "\(run.trashed) asset\(suffix) moved to Trash"
     }
@@ -276,7 +278,7 @@ public struct RunDetailSheet: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text(runKind.uppercased())
+                Text(runKind.loc.uppercased())
                     .font(.cairnScaled(size: 11, weight: .semibold))
                     .tracking(0.9)
                     .foregroundStyle(t.textMuted)
@@ -327,13 +329,13 @@ public struct RunDetailSheet: View {
         HStack(spacing: 6) {
             MetaChip(label: String(run.id.suffix(8)), tone: .neutral, mono: true)
             if run.tag != nil {
-                MetaChip(label: "breadcrumb set", tone: .verified, icon: "tag")
+                MetaChip(label: "breadcrumb set".loc, tone: .verified, icon: "tag")
             }
             if !restored.isEmpty {
-                MetaChip(label: "\(restored.count) restored", tone: .info)
+                MetaChip(label: CairnL10n.isChinese ? "\(restored.count) 项已恢复" : "\(restored.count) restored", tone: .info)
             }
             if !excludedLocal.isEmpty {
-                MetaChip(label: "\(excludedLocal.count) excluded", tone: .info)
+                MetaChip(label: CairnL10n.isChinese ? "\(excludedLocal.count) 项已排除" : "\(excludedLocal.count) excluded", tone: .info)
             }
             Spacer(minLength: 0)
         }
@@ -349,7 +351,7 @@ public struct RunDetailSheet: View {
         case .safetyRail(let reason):
             Callout(.danger, icon: "exclamationmark.triangle") {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Percent threshold exceeded").fontWeight(.semibold)
+                    Text("Percent threshold exceeded".loc).fontWeight(.semibold)
                     Text(safetyRailMessage(from: reason))
                         .opacity(0.9)
                         .fixedSize(horizontal: false, vertical: true)
@@ -360,8 +362,8 @@ public struct RunDetailSheet: View {
         case .emptyServer:
             Callout(.pending, icon: "exclamationmark.triangle") {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Server returned no assets").fontWeight(.semibold)
-                    Text("cairn refused to act on what looked like a transient API problem. Nothing was touched.")
+                    Text("Server returned no assets".loc).fontWeight(.semibold)
+                    Text("cairn refused to act on what looked like a transient API problem. Nothing was touched.".loc)
                         .opacity(0.9)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -371,8 +373,8 @@ public struct RunDetailSheet: View {
         case .emptyLocal:
             Callout(.pending, icon: "exclamationmark.triangle") {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Local library is empty").fontWeight(.semibold)
-                    Text("Photos permission may have been revoked, or the library scan hadn't completed. Nothing was touched.")
+                    Text("Local library is empty".loc).fontWeight(.semibold)
+                    Text("Photos permission may have been revoked, or the library scan hadn't completed. Nothing was touched.".loc)
                         .opacity(0.9)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -382,8 +384,8 @@ public struct RunDetailSheet: View {
         case .firstRunNotDryRun:
             Callout(.pending, icon: "exclamationmark.triangle") {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("First run must be a dry-run").fontWeight(.semibold)
-                    Text("cairn requires a preview before the first real trash on a fresh observed store.")
+                    Text("First run must be a dry-run".loc).fontWeight(.semibold)
+                    Text("cairn requires a preview before the first real trash on a fresh observed store.".loc)
                         .opacity(0.9)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -393,7 +395,7 @@ public struct RunDetailSheet: View {
         case .unexpected(let reason):
             Callout(.pending, icon: "exclamationmark.triangle") {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Trash didn't finish").fontWeight(.semibold)
+                    Text("Trash didn't finish".loc).fontWeight(.semibold)
                     Text(reason).opacity(0.9)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -430,8 +432,8 @@ public struct RunDetailSheet: View {
         // a callout in the sheet body, not the global toast).
         Callout(.verified, icon: "checkmark.circle") {
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(count) restored").fontWeight(.semibold)
-                Text("Moved out of Immich's Trash, back to your active library.")
+                Text(CairnL10n.isChinese ? "\(count) 项已恢复" : "\(count) restored").fontWeight(.semibold)
+                Text("Moved out of Immich's Trash, back to your active library.".loc)
                     .opacity(0.85)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -446,7 +448,7 @@ public struct RunDetailSheet: View {
         // in the sheet so it lives alongside the run's other state.
         Callout(.info, icon: "shield") {
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(count) excluded").fontWeight(.semibold)
+                Text(CairnL10n.isChinese ? "\(count) 项已排除" : "\(count) excluded").fontWeight(.semibold)
                 Text(count == 1
                      ? "Future runs will skip it."
                      : "Future runs will skip these assets.")
@@ -469,7 +471,7 @@ public struct RunDetailSheet: View {
                     .foregroundStyle(t.textHint)
                     .accessibilityHidden(true)
                 TextField("", text: $filter, prompt:
-                    Text("Filter by filename…")
+                    Text("Filter by filename…".loc)
                         .font(.cairnScaled(size: 12, design: .monospaced))
                         .foregroundColor(t.textHint)
                 )
@@ -489,7 +491,7 @@ public struct RunDetailSheet: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Clear filter")
+                    .accessibilityLabel("Clear filter".loc)
                 }
             }
             .padding(.horizontal, 10)
@@ -503,7 +505,7 @@ public struct RunDetailSheet: View {
 
             if !selectableAssets.isEmpty {
                 Button(action: toggleSelectAllVisible) {
-                    Text(allVisibleSelected ? "Deselect" : "Select all")
+                    Text(allVisibleSelected ? "Deselect".loc : "Select all".loc)
                         .font(.cairnScaled(size: 11, weight: .semibold))
                         .foregroundStyle(t.textBody)
                         .padding(.horizontal, 10)
@@ -522,7 +524,7 @@ public struct RunDetailSheet: View {
 
     private var selectionCountRow: some View {
         HStack {
-            Text(selectionCountLabel.uppercased())
+            Text(selectionCountLabel.loc.uppercased())
                 .font(.cairnScaled(size: 11, weight: .semibold))
                 .tracking(0.9)
                 .foregroundStyle(t.textMuted)
@@ -532,7 +534,7 @@ public struct RunDetailSheet: View {
                     Circle()
                         .fill(t.textMuted)
                         .frame(width: 5, height: 5)
-                    Text("IN TRASH")
+                    Text("IN TRASH".loc)
                         .font(.cairnScaled(size: 11, weight: .semibold))
                         .tracking(0.9)
                         .foregroundStyle(t.textMuted)
@@ -546,12 +548,16 @@ public struct RunDetailSheet: View {
     private var selectionCountLabel: String {
         let base: String
         if filtered.count == assets.count {
-            base = "\(assets.count) assets"
+            base = CairnL10n.isChinese ? "\(assets.count) 项照片" : "\(assets.count) assets"
         } else {
-            base = "\(filtered.count) of \(assets.count) match"
+            base = CairnL10n.isChinese
+                ? "\(filtered.count) / \(assets.count) 项匹配"
+                : "\(filtered.count) of \(assets.count) match"
         }
         if !selected.isEmpty {
-            return "\(base) · \(selected.count) selected"
+            return CairnL10n.isChinese
+                ? "\(base) · 已选 \(selected.count) 项"
+                : "\(base) · \(selected.count) selected"
         }
         return base
     }
@@ -564,9 +570,9 @@ public struct RunDetailSheet: View {
                 if !assets.isEmpty {
                     assetGrid
                 }
-                sectionLabel("Run metadata")
+                sectionLabel("Run metadata".loc)
                 metadataCard
-                sectionLabel("Server-side breadcrumb")
+                sectionLabel("Server-side breadcrumb".loc)
                 breadcrumbCard
                 Spacer(minLength: 8)
             }
@@ -578,7 +584,9 @@ public struct RunDetailSheet: View {
         CairnCard {
             Group {
                 if filtered.isEmpty {
-                    Text("No filename matches \"\(filter)\".")
+                    Text(CairnL10n.isChinese
+                        ? "没有文件名匹配“\(filter)”。"
+                        : "No filename matches \"\(filter)\".")
                         .font(.cairnScaled(size: 13))
                         .foregroundStyle(t.textMuted)
                         .frame(maxWidth: .infinity)
@@ -603,7 +611,7 @@ public struct RunDetailSheet: View {
     }
 
     private func sectionLabel(_ s: String) -> some View {
-        Text(s.uppercased())
+        Text(CairnL10n.isChinese ? s.loc : s.loc.uppercased())
             .font(.cairnScaled(size: 11, weight: .semibold))
             .tracking(0.9)
             .foregroundStyle(t.textMuted)
@@ -644,7 +652,7 @@ public struct RunDetailSheet: View {
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
                 // from screens/run-detail.jsx — keep verbatim
-                Text("Find these in Immich's Tags view. Assets stay in Trash for 30 days.")
+                Text("Find these in Immich's Tags view. Assets stay in Trash for 30 days.".loc)
                     .font(.cairnScaled(size: 12))
                     .foregroundStyle(t.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -684,7 +692,7 @@ public struct RunDetailSheet: View {
         } else if canRestore {
             HStack(spacing: 10) {
                 Button(action: onClose) {
-                    Text("Close")
+                    Text("Close".loc)
                         .font(.cairnScaled(size: 16, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
@@ -695,7 +703,7 @@ public struct RunDetailSheet: View {
                 .buttonStyle(.plain)
                 .frame(maxWidth: .infinity)
 
-                Text("Select assets to act on them")
+                Text("Select assets to act on them".loc)
                     .font(.cairnScaled(size: 13))
                     .foregroundStyle(t.textMuted)
                     .frame(maxWidth: .infinity, minHeight: 44)
@@ -706,7 +714,7 @@ public struct RunDetailSheet: View {
             .background(footerSurface)
         } else {
             Button(action: onClose) {
-                Text("Close")
+                Text("Close".loc)
                     .font(.cairnScaled(size: 16, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
@@ -991,7 +999,7 @@ private struct SelectionActionBar: View {
     private var countRow: some View {
         HStack(spacing: 8) {
             // Selection count pill
-            Text("\(selectedCount) selected")
+            Text(CairnL10n.isChinese ? "已选择 \(selectedCount) 项" : "\(selectedCount) selected")
                 .font(.cairnScaled(size: 12, weight: .semibold))
                 .foregroundStyle(t.primaryInk)
                 .padding(.horizontal, 9)
@@ -1014,7 +1022,7 @@ private struct SelectionActionBar: View {
                 .clipShape(Capsule())
             }
 
-            Button("Clear", action: onClear)
+            Button("Clear".loc, action: onClear)
                 .font(.cairnScaled(size: 12))
                 .foregroundStyle(t.textMuted)
                 .buttonStyle(.plain)
@@ -1063,7 +1071,7 @@ private struct ActionButton: View {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.cairnScaled(size: 18, weight: .semibold))
-                Text(label)
+                Text(label.loc)
                     .font(.cairnScaled(size: 11, weight: .semibold))
                     .tracking(0.2)
             }

@@ -1,0 +1,61 @@
+/* Tabs & Common */
+"Status" = "Status";
+"Runs" = "Runs";
+"Settings" = "Settings";
+"Back" = "Back";
+"Done" = "Done";
+"Cancel" = "Cancel";
+"Close" = "Close";
+"OK" = "OK";
+"Save" = "Save";
+"Delete" = "Delete";
+"Edit" = "Edit";
+"Retry" = "Retry";
+"Refresh" = "Refresh";
+"Confirm" = "Confirm";
+"Copy" = "Copy";
+"Copied" = "Copied";
+"Reveal" = "Reveal";
+"Hide" = "Hide";
+"Continue" = "Continue";
+"Skip for now" = "Skip for now";
+"Language" = "Language";
+
+/* Status */
+"Sync now" = "Sync now";
+"Syncing…" = "Syncing…";
+"Stop" = "Stop";
+"Cancelling…" = "Cancelling…";
+"Up to date" = "Up to date";
+"Library" = "Library";
+"Local" = "Local";
+"Indexed" = "Indexed";
+"Server" = "Server";
+"Matched" = "Matched";
+"Candidates" = "Candidates";
+"Ready to trash" = "Ready to trash";
+"Pending review" = "Pending review";
+"Recent runs" = "Recent runs";
+"Latest journal" = "Latest journal";
+
+/* Appearance */
+"Appearance" = "Appearance";
+"Color scheme" = "Color scheme";
+"Time format" = "Time format";
+"Auto" = "Auto";
+"Light" = "Light";
+"Dark" = "Dark";
+"System" = "System";
+
+/* Initial Scan */
+"Indexing your library" = "Indexing your library";
+"processed" = "processed";
+"ELAPSED" = "ELAPSED";
+"REMAINING" = "REMAINING";
+"Start indexing" = "Start indexing";
+"Resume indexing" = "Resume indexing";
+"Stop indexing" = "Stop indexing";
+"Scan options" = "Scan options";
+"Continue in app" = "Continue in app";
+"Start over" = "Start over";
+

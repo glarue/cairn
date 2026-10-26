@@ -41,14 +41,14 @@ public struct PendingTrashesSheet: View {
     public var body: some View {
         VStack(spacing: 0) {
             AppHeader(
-                title: "Pending trashes",
+                title: "Pending trashes".loc,
                 subtitle: subtitle,
                 leading: {
                     Button(action: onClose) {
                         HStack(spacing: 4) {
                             Image(systemName: "chevron.left")
                                 .font(.cairnScaled(size: 13, weight: .semibold))
-                            Text("Status")
+                            Text("Status".loc)
                                 .font(.cairnScaled(size: 15))
                         }
                         .foregroundStyle(t.textBody)
@@ -80,21 +80,27 @@ public struct PendingTrashesSheet: View {
 
     private var subtitle: String {
         let n = intents.count
-        return n == 1 ? "1 request" : "\(n) requests"
+        return CairnL10n.isChinese ? "\(n) 个请求" : (n == 1 ? "1 request" : "\(n) requests")
     }
 
     private var explainer: some View {
-        Text("These trash runs failed and are queued for retry. They run automatically on the next sync. Items hit the retry limit (\(maxRetryAttempts) attempts) typically when the server is unreachable or the API key has changed — fix the root cause and tap Retry now.")
-            .font(.cairnScaled(size: 13))
-            .foregroundStyle(t.textMuted)
-            .fixedSize(horizontal: false, vertical: true)
+        Group {
+            if CairnL10n.isChinese {
+                Text("这些移入废纸篓操作未成功，已加入重试队列。它们将在下次同步时自动重试。达到重试限制（\(maxRetryAttempts) 次尝试）通常是因为服务器无法连接或 API 密钥已更改 — 请修复问题后轻点“立即全部重试”。")
+            } else {
+                Text("These trash runs failed and are queued for retry. They run automatically on the next sync. Items hit the retry limit (\(maxRetryAttempts) attempts) typically when the server is unreachable or the API key has changed — fix the root cause and tap Retry now.")
+            }
+        }
+        .font(.cairnScaled(size: 13))
+        .foregroundStyle(t.textMuted)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var retryAllButton: some View {
         Button(action: onRetryAll) {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.clockwise")
-                Text("Retry all now")
+                Text("Retry all now".loc)
                     .fontWeight(.semibold)
             }
             .frame(maxWidth: .infinity)
@@ -157,16 +163,21 @@ public struct PendingTrashesSheet: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Discard pending trash")
+            .accessibilityLabel("Discard pending trash".loc)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
     }
 
     private func metaLine(intent: PendingTrashIntent, isStuck: Bool) -> String {
-        let attempts = intent.attemptCount == 1 ? "1 attempt" : "\(intent.attemptCount) attempts"
-        if isStuck { return "Stuck — \(attempts) of \(maxRetryAttempts) used" }
-        return "\(attempts) so far"
+        if CairnL10n.isChinese {
+            if isStuck { return "已停滞 — 已达最大重试次数 \(intent.attemptCount) / \(maxRetryAttempts)" }
+            return "已尝试 \(intent.attemptCount) 次"
+        } else {
+            let attempts = intent.attemptCount == 1 ? "1 attempt" : "\(intent.attemptCount) attempts"
+            if isStuck { return "Stuck — \(attempts) of \(maxRetryAttempts) used" }
+            return "\(attempts) so far"
+        }
     }
 
     private var emptyState: some View {
@@ -175,10 +186,10 @@ public struct PendingTrashesSheet: View {
             Image(systemName: "checkmark.circle")
                 .font(.cairnScaled(size: 36, weight: .light))
                 .foregroundStyle(t.verifiedInk)
-            Text("Nothing pending")
+            Text("Nothing pending".loc)
                 .font(.cairnScaled(size: 17, weight: .semibold))
                 .foregroundStyle(t.text)
-            Text("All trash requests completed successfully.")
+            Text("All trash requests completed successfully.".loc)
                 .font(.cairnScaled(size: 13))
                 .foregroundStyle(t.textMuted)
             Spacer()

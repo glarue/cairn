@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "Cairn",
+    defaultLocalization: "en",
     // iOS 17 + macOS 14 are the floor: SwiftData and Swift Testing
     // both require this generation. The CairnIOSCore target additionally
     // uses PhotoKit / Security / SwiftData APIs available since iOS 17.
@@ -42,6 +43,8 @@ let package = Package(
                 // placeholders. Downscaled to ~600px tall / 75% JPEG
                 // (~1MB total) — plenty of detail at thumbnail size.
                 .process("Resources/FixturePhotos"),
+                .process("Resources/en.lproj"),
+                .process("Resources/zh-Hans.lproj"),
             ]
         ),
         .executableTarget(

@@ -190,24 +190,42 @@ public struct DryRunSheet: View {
     }
 
     private var headerTitle: String {
-        if tripped { return "\(candidates.count) candidates is above your cap" }
-        return "Trash \(candidates.count) on Immich?"
+        if tripped {
+            return CairnL10n.isChinese
+                ? "\(candidates.count) 项候选删除已超过上限"
+                : "\(candidates.count) candidates is above your cap"
+        }
+        return CairnL10n.isChinese
+            ? "将 Immich 上的 \(candidates.count) 项移入废纸篓？"
+            : "Trash \(candidates.count) on Immich?"
     }
 
     private var headerSubtitle: String {
-        if tripped { return "Nothing was touched. Review the photos before deciding." }
-        return "\(CairnTimeHelpers.formatBytes(totalBytes)) · stays in Immich's Trash for 30 days"
+        if tripped { return "Nothing was touched. Review the photos before deciding.".loc }
+        let bytesStr = CairnTimeHelpers.formatBytes(totalBytes)
+        return CairnL10n.isChinese
+            ? "\(bytesStr) · 在 Immich 废纸篓中保留 30 天"
+            : "\(bytesStr) · stays in Immich's Trash for 30 days"
     }
 
     private var trippedBanner: some View {
         Callout(.danger, icon: "exclamationmark.triangle") {
             VStack(alignment: .leading, spacing: 2) {
-                Text(String(format: "%.2f%% of matched would be trashed", pct))
+                Text(CairnL10n.isChinese
+                    ? String(format: "将移入废纸篓的照片占已匹配的 %.2f%%", pct)
+                    : String(format: "%.2f%% of matched would be trashed", pct))
                     .fontWeight(.semibold)
-                (Text("Your cap is ") + Text(String(format: "%.1f%%", maxDeletePercent)).bold()
-                    + Text(" (and ") + Text("\(minDeleteFloor)+").bold() + Text(" assets). ")
-                    + Text("Look through the grid — does it match what you deleted on your phone?"))
-                    .opacity(0.9).fixedSize(horizontal: false, vertical: true)
+                if CairnL10n.isChinese {
+                    (Text("你的上限为 ") + Text(String(format: "%.1f%%", maxDeletePercent)).bold()
+                        + Text("（且至少 ") + Text("\(minDeleteFloor)+").bold() + Text(" 项照片）。")
+                        + Text("请浏览下方照片网格 — 是否与你在手机上删除的一致？"))
+                        .opacity(0.9).fixedSize(horizontal: false, vertical: true)
+                } else {
+                    (Text("Your cap is ") + Text(String(format: "%.1f%%", maxDeletePercent)).bold()
+                        + Text(" (and ") + Text("\(minDeleteFloor)+").bold() + Text(" assets). ")
+                        + Text("Look through the grid — does it match what you deleted on your phone?"))
+                        .opacity(0.9).fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .padding(.horizontal, 16)
@@ -218,17 +236,17 @@ public struct DryRunSheet: View {
     private var summaryStrip: some View {
         CairnCard {
             HStack(spacing: 12) {
-                MiniStat(label: tripped ? "Over cap" : "Of matched",
+                MiniStat(label: (tripped ? "Over cap" : "Of matched").loc,
                          value: String(format: "%.2f%%", pct),
-                         sub: String(format: "cap %.1f%%", maxDeletePercent),
+                         sub: CairnL10n.isChinese ? String(format: "上限 %.1f%%", maxDeletePercent) : String(format: "cap %.1f%%", maxDeletePercent),
                          tone: tripped ? .danger : .neutral)
                 Rectangle().fill(t.divider).frame(width: 0.5)
-                MiniStat(label: "Live pairs", value: "\(livePairs)", sub: "still + motion")
+                MiniStat(label: "Live pairs".loc, value: "\(livePairs)", sub: "still + motion".loc)
                 Rectangle().fill(t.divider).frame(width: 0.5)
-                MiniStat(label: "Videos", value: "\(videoCount)")
+                MiniStat(label: "Videos".loc, value: "\(videoCount)")
                 Rectangle().fill(t.divider).frame(width: 0.5)
                 let bytesParts = CairnTimeHelpers.formatBytes(totalBytes).split(separator: " ")
-                MiniStat(label: "Freed",
+                MiniStat(label: "Freed".loc,
                          value: String(bytesParts.first ?? "0"),
                          sub: bytesParts.count > 1 ? String(bytesParts[1]) : nil)
             }
@@ -239,14 +257,14 @@ public struct DryRunSheet: View {
 
     private var sortStrip: some View {
         HStack {
-            Text("\(candidates.count) PHOTOS · TAP TO ZOOM")
+            Text(CairnL10n.isChinese ? "\(candidates.count) 张照片 · 轻点缩放" : "\(candidates.count) PHOTOS · TAP TO ZOOM")
                 .font(.cairnScaled(size: 11, weight: .semibold))
                 .tracking(0.9)
                 .foregroundStyle(t.textHint)
             Spacer()
             HStack(spacing: 2) {
-                SegBtn(label: "Recent", active: sort == .recent) { sort = .recent }
-                SegBtn(label: "By type", active: sort == .type) { sort = .type }
+                SegBtn(label: "Recent".loc, active: sort == .recent) { sort = .recent }
+                SegBtn(label: "By type".loc, active: sort == .type) { sort = .type }
             }
             .padding(2)
             .background(t.bg)
@@ -294,22 +312,22 @@ public struct DryRunSheet: View {
 
     private var safetyChecks: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("SAFETY CHECKS")
+            Text("SAFETY CHECKS".loc)
                 .font(.cairnScaled(size: 11, weight: .semibold)).tracking(0.9)
                 .foregroundStyle(t.textHint)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 8)
             CairnCard {
                 VStack(spacing: 0) {
-                    CheckRow(label: String(format: "Under %.1f%% cap", maxDeletePercent), pass: !overPct)
+                    CheckRow(label: CairnL10n.isChinese ? String(format: "低于 %.1f%% 上限", maxDeletePercent) : String(format: "Under %.1f%% cap", maxDeletePercent), pass: !overPct)
                     RowDivider()
-                    CheckRow(label: "Over \(minDeleteFloor)-asset floor", pass: overFloor)
+                    CheckRow(label: CairnL10n.isChinese ? "超过 \(minDeleteFloor) 项照片底线" : "Over \(minDeleteFloor)-asset floor", pass: overFloor)
                     RowDivider()
-                    CheckRow(label: "Server returned > 0 assets", pass: library.server > 0)
+                    CheckRow(label: "Server returned > 0 assets".loc, pass: library.server > 0)
                     RowDivider()
-                    CheckRow(label: "Photos access is Full", pass: photoAccessIsFull)
+                    CheckRow(label: "Photos access is Full".loc, pass: photoAccessIsFull)
                     RowDivider()
-                    CheckRow(label: "Purview set populated", pass: library.matched > 0)
+                    CheckRow(label: "Purview set populated".loc, pass: library.matched > 0)
                 }
             }
             .padding(.bottom, 16)
@@ -340,9 +358,9 @@ public struct DryRunSheet: View {
 
     private var normalActions: some View {
         HStack(spacing: 10) {
-            ActionButton(label: "Not now", role: .secondary, action: onClose)
+            ActionButton(label: "Not now".loc, role: .secondary, action: onClose)
                 .frame(maxWidth: .infinity)
-            ActionButton(label: "Move \(candidates.count) to Trash", icon: "trash", role: .danger) {
+            ActionButton(label: CairnL10n.isChinese ? "将 \(candidates.count) 项移入废纸篓" : "Move \(candidates.count) to Trash", icon: "trash", role: .danger) {
                 phase = .confirming
             }
             .frame(maxWidth: .infinity)
@@ -353,20 +371,14 @@ public struct DryRunSheet: View {
     private var trippedActions: some View {
         VStack(spacing: 8) {
             HStack(spacing: 10) {
-                ActionButton(label: "Cancel", role: .secondary, action: onClose)
+                ActionButton(label: "Cancel".loc, role: .secondary, action: onClose)
                     .frame(maxWidth: .infinity)
-                ActionButton(label: "Proceed anyway", icon: "exclamationmark.triangle", role: .primary) {
+                ActionButton(label: "Proceed anyway".loc, icon: "exclamationmark.triangle", role: .primary) {
                     phase = .confirming
                 }
                 .frame(maxWidth: .infinity)
                 .frame(maxWidth: .infinity)
             }
-            // The "Raise threshold to N% and retry" affordance used to live
-            // here with an empty action closure — a dead button on a
-            // safety-critical surface. The cap lives in Settings; raising
-            // it is a deliberate settings change, not a one-tap escape
-            // hatch on the confirmation sheet. Removed rather than left
-            // fake. (2026-06-09 review.)
         }
     }
 
@@ -374,16 +386,22 @@ public struct DryRunSheet: View {
         VStack(spacing: 12) {
             Callout(.danger, icon: "exclamationmark.triangle") {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Confirm once more").fontWeight(.semibold)
-                    (Text.cairnWord + Text(" will tag ") + Text("cairn/v1/run/…").font(.cairnScaled(size: 11.5, design: .monospaced))
-                        + Text(" then move \(candidates.count) asset\(candidates.count == 1 ? "" : "s") to Immich's Trash."))
-                        .opacity(0.9).fixedSize(horizontal: false, vertical: true)
+                    Text("Confirm once more".loc).fontWeight(.semibold)
+                    if CairnL10n.isChinese {
+                        (Text.cairnWord + Text(" 将标记 ") + Text("cairn/v1/run/…").font(.cairnScaled(size: 11.5, design: .monospaced))
+                            + Text(" 然后将 \(candidates.count) 项资产移入 Immich 废纸篓。"))
+                            .opacity(0.9).fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        (Text.cairnWord + Text(" will tag ") + Text("cairn/v1/run/…").font(.cairnScaled(size: 11.5, design: .monospaced))
+                            + Text(" then move \(candidates.count) asset\(candidates.count == 1 ? "" : "s") to Immich's Trash."))
+                            .opacity(0.9).fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
             HStack(spacing: 10) {
-                ActionButton(label: "Back", role: .secondary) { phase = .review }
+                ActionButton(label: "Back".loc, role: .secondary) { phase = .review }
                     .frame(maxWidth: .infinity)
-                ActionButton(label: "Yes, move \(candidates.count) to Trash", role: .danger) {
+                ActionButton(label: CairnL10n.isChinese ? "确认，将 \(candidates.count) 项移入废纸篓" : "Yes, move \(candidates.count) to Trash", role: .danger) {
                     runIt()
                 }
                 .frame(maxWidth: .infinity)
@@ -416,11 +434,11 @@ public struct DryRunSheet: View {
                 Circle().fill(t.surfaceAlt).frame(width: 48, height: 48)
                 ProgressView().tint(t.textBody)
             }
-            Text("Tagging and moving to Trash")
+            Text("Tagging and moving to Trash".loc)
                 .font(.cairnScaled(size: 20, weight: .semibold))
                 .tracking(-0.3)
                 .foregroundStyle(t.text)
-            Text("Writing breadcrumb · \(candidates.count) assets")
+            Text(CairnL10n.isChinese ? "正在写入标记 · \(candidates.count) 项资产" : "Writing breadcrumb · \(candidates.count) assets")
                 .font(.cairnScaled(size: 13))
                 .foregroundStyle(t.textMuted)
         }
@@ -435,17 +453,25 @@ public struct DryRunSheet: View {
                     .font(.cairnScaled(size: 22, weight: .semibold))
                     .foregroundStyle(t.verifiedInk)
             }
-            Text("\(candidates.count) moved to Trash")
+            Text(CairnL10n.isChinese ? "\(candidates.count) 项已移入废纸篓" : "\(candidates.count) moved to Trash")
                 .font(.cairnScaled(size: 20, weight: .semibold))
                 .tracking(-0.3)
                 .foregroundStyle(t.text)
-            (Text("Tagged ") + Text("cairn/v1/run/…").font(.cairnScaled(size: 11.5, design: .monospaced)) + Text(". Recoverable in Immich's Trash for 30 days."))
-                .font(.cairnScaled(size: 13))
-                .foregroundStyle(t.textMuted)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 280)
+            if CairnL10n.isChinese {
+                (Text("已添加标记 ") + Text("cairn/v1/run/…").font(.cairnScaled(size: 11.5, design: .monospaced)) + Text("。可在 Immich 废纸篓中保留 30 天。"))
+                    .font(.cairnScaled(size: 13))
+                    .foregroundStyle(t.textMuted)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 280)
+            } else {
+                (Text("Tagged ") + Text("cairn/v1/run/…").font(.cairnScaled(size: 11.5, design: .monospaced)) + Text(". Recoverable in Immich's Trash for 30 days."))
+                    .font(.cairnScaled(size: 13))
+                    .foregroundStyle(t.textMuted)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 280)
+            }
 
-            ActionButton(label: "Back to status", role: .primary) {
+            ActionButton(label: "Back to status".loc, role: .primary) {
                 onClose()
             }
             .padding(.top, 8)
@@ -473,7 +499,7 @@ private struct ModeChip: View {
             if tripped { return ("Tripped · review needed", t.dangerSoft, t.dangerInk) }
             return ("Live · moves to Trash", t.dangerSoft.mix(with: t.danger, amount: 0.30), t.dangerInk)
         }()
-        return Text(label.uppercased())
+        return Text(CairnL10n.isChinese ? label.loc : label.loc.uppercased())
             .font(.cairnScaled(size: 10, weight: .semibold))
             .tracking(0.9)
             .padding(.horizontal, 8)
@@ -496,7 +522,7 @@ private struct MiniStat: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(label.uppercased())
+            Text(CairnL10n.isChinese ? label.loc : label.loc.uppercased())
                 .font(.cairnScaled(size: 10, weight: .semibold))
                 .tracking(0.9)
                 .foregroundStyle(t.textHint)
@@ -522,7 +548,7 @@ private struct SegBtn: View {
 
     var body: some View {
         Button(action: action) {
-            Text(label)
+            Text(label.loc)
                 .font(.cairnScaled(size: 12, weight: .medium))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
@@ -545,7 +571,7 @@ private struct CheckRow: View {
             Image(systemName: pass ? "checkmark.circle.fill" : "xmark.octagon.fill")
                 .foregroundStyle(pass ? t.verifiedInk : t.dangerInk)
                 .font(.cairnScaled(size: 14))
-            Text(label)
+            Text(label.loc)
                 .font(.cairnScaled(size: 14))
                 .foregroundStyle(t.textBody)
             Spacer()
@@ -572,7 +598,7 @@ private struct ActionButton: View {
                     Image(systemName: icon)
                         .font(.cairnScaled(size: 13, weight: .semibold))
                 }
-                Text(label)
+                Text(label.loc)
                     .font(.cairnScaled(size: 15, weight: .semibold))
             }
             .frame(maxWidth: .infinity)

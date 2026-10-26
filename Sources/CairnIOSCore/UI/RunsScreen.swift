@@ -92,8 +92,8 @@ public struct RunsScreen: View {
         VStack(alignment: .leading, spacing: 0) {
             // Subtitle copy from screens/runs.jsx:83 — "<n> total · last <relTime>".
             AppHeader(
-                title: "Runs",
-                subtitle: "\(runs.count) total · last \(CairnTimeHelpers.relativeTime(sortedRuns.first?.startedAt ?? now, now: now))"
+                title: "Runs".loc,
+                subtitle: "\(runs.count) \("total".loc) · \("last".loc) \(CairnTimeHelpers.relativeTime(sortedRuns.first?.startedAt ?? now, now: now))"
             )
 
             ForEach(dayGroups, id: \.dayKey) { group in
@@ -148,11 +148,16 @@ public struct RunsScreen: View {
     /// prototype's date string is already implicitly "today" or
     /// "yesterday" most of the time.
     private static func dayLabel(_ day: Date, now: Date, calendar: Calendar) -> String {
-        if calendar.isDate(day, inSameDayAs: now) { return "Today" }
+        if calendar.isDate(day, inSameDayAs: now) { return "Today".loc }
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
-           calendar.isDate(day, inSameDayAs: yesterday) { return "Yesterday" }
+           calendar.isDate(day, inSameDayAs: yesterday) { return "Yesterday".loc }
         let f = DateFormatter()
-        f.dateFormat = "EEE, MMMM d"
+        f.locale = CairnL10n.currentLocale
+        if CairnL10n.isChinese {
+            f.dateFormat = "M月d日 EEE"
+        } else {
+            f.dateFormat = "EEE, MMMM d"
+        }
         return f.string(from: day)
     }
 
@@ -163,7 +168,7 @@ public struct RunsScreen: View {
     /// what a "run" actually contains before they have one to look at.
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 0) {
-            AppHeader(title: "Runs", subtitle: "No runs yet")
+            AppHeader(title: "Runs".loc, subtitle: "No runs yet".loc)
 
             VStack(spacing: 0) {
                 // Dashed icon tile.
@@ -181,13 +186,13 @@ public struct RunsScreen: View {
                 }
                 .padding(.bottom, 18)
 
-                Text("No runs yet.")
+                Text("No runs yet.".loc)
                     .font(.cairnScaled(size: 18, weight: .semibold))
                     .tracking(-0.27)
                     .foregroundStyle(t.text)
                     .padding(.bottom, 6)
 
-                Text("Every sync lands here — completed, aborted, or restored — with the candidate list and the journal of API calls. You can restore any trashed batch while Immich still has it.")
+                Text("Every sync lands here — completed, aborted, or restored — with the candidate list and the journal of API calls. You can restore any trashed batch while Immich still has it.".loc)
                     .font(.cairnScaled(size: 13))
                     .foregroundStyle(t.textMuted)
                     .multilineTextAlignment(.center)
@@ -201,7 +206,7 @@ public struct RunsScreen: View {
 
                 // CTA (verbatim, screens/runs.jsx:67).
                 Button(action: onStartSync) {
-                    Text("Start a sync from Status")
+                    Text("Start a sync from Status".loc)
                         .font(.cairnScaled(size: 16, weight: .semibold))
                         .frame(minWidth: 200)
                         .padding(.vertical, 14)
@@ -221,13 +226,13 @@ public struct RunsScreen: View {
     private var runIncludesCard: some View {
         // Lines copied verbatim from screens/runs.jsx:38–43.
         let lines = [
-            "Thumbnails + filenames of every candidate",
-            "Safety-rail outcome (pass or tripped)",
-            "Raw journal of every Immich API call",
-            "One-tap restore for trashed assets",
+            "Thumbnails + filenames of every candidate".loc,
+            "Safety-rail outcome (pass or tripped)".loc,
+            "Raw journal of every Immich API call".loc,
+            "One-tap restore for trashed assets".loc,
         ]
         return VStack(alignment: .leading, spacing: 0) {
-            Text("A run includes".uppercased())
+            Text(CairnL10n.isChinese ? "A run includes".loc : "A run includes".loc.uppercased())
                 .font(.cairnScaled(size: 11, weight: .semibold))
                 .tracking(0.88)
                 .foregroundStyle(t.textHint)
@@ -245,7 +250,7 @@ public struct RunsScreen: View {
                     }
                     .padding(.top, 2)
 
-                    Text(line)
+                    Text(line.loc)
                         .font(.cairnScaled(size: 12.5))
                         .foregroundStyle(t.textBody)
                         .lineSpacing(2)
@@ -304,12 +309,12 @@ private struct RunListRow: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
-                        StatusPill(label: pillLabel, tone: pillTone)
-                        Text("\(countLabel)")
+                        StatusPill(label: pillLabel.loc, tone: pillTone)
+                        Text(countLabel)
                             .font(.cairnScaled(size: 13, weight: .medium))
                             .foregroundStyle(t.textBody)
                         if run.restored > 0 {
-                            StatusPill(label: "\(run.restored) restored", tone: .neutral)
+                            StatusPill(label: CairnL10n.isChinese ? "\(run.restored) 已恢复" : "\(run.restored) restored", tone: .neutral)
                         }
                     }
                     HStack(spacing: 4) {
@@ -360,9 +365,10 @@ private struct RunListRow: View {
     }
 
     private var countLabel: String {
-        if run.status == .aborted { return "0 trashed" }
-        if run.dryRun { return "0 trashed" }
-        if run.trashed == 0 { return "no changes" }
+        if run.status == .aborted { return "0 trashed".loc }
+        if run.dryRun { return "0 trashed".loc }
+        if run.trashed == 0 { return "no changes".loc }
+        if CairnL10n.isChinese { return "\(run.trashed) 项已移入废纸篓" }
         return "\(run.trashed) trashed"
     }
 
@@ -427,7 +433,7 @@ private struct StatusPill: View {
             Circle()
                 .fill(inkColor.opacity(0.85))
                 .frame(width: 5, height: 5)
-            Text(label)
+            Text(label.loc)
                 .font(.cairnScaled(size: 10.5, weight: .semibold))
                 .tracking(0.2)
         }

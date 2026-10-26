@@ -472,4 +472,14 @@ struct JSONFileSettingsStoreTests {
         #expect(loaded == second)
         #expect(loaded != first)
     }
+
+    @Test("AppLanguage encodes and decodes cleanly with system fallback")
+    func appLanguageRoundTrip() throws {
+        for lang in AppLanguage.allCases {
+            let settings = CairnSettings(appLanguage: lang)
+            let data = try JSONEncoder().encode(settings)
+            let decoded = try JSONDecoder().decode(CairnSettings.self, from: data)
+            #expect(decoded.appLanguage == lang)
+        }
+    }
 }

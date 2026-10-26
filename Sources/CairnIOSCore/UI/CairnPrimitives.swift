@@ -531,7 +531,7 @@ public struct KeylineSection: View {
                     .font(.cairnScaled(size: 11, weight: .semibold))
                     .foregroundStyle(iconTint)
             }
-            Text(title.uppercased())
+            Text(CairnL10n.isChinese ? title.loc : title.loc.uppercased())
                 .font(.cairnScaled(size: 11, weight: .semibold))
                 .tracking(0.9)
                 .foregroundStyle(t.textMuted)
@@ -610,7 +610,7 @@ public struct KeyValRow: View {
 
     public var body: some View {
         HStack(spacing: 8) {
-            Text(label)
+            Text(label.loc)
                 .font(.cairnScaled(size: 15))
                 .foregroundStyle(t.textBody)
             Spacer(minLength: 12)
@@ -651,11 +651,11 @@ public struct ToggleRow: View {
     public var body: some View {
         HStack(alignment: sub == nil ? .center : .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(label)
+                Text(label.loc)
                     .font(.cairnScaled(size: 15))
                     .foregroundStyle(t.textBody)
                 if let sub {
-                    Text(sub)
+                    Text(sub.loc)
                         .font(.cairnScaled(size: 12))
                         .foregroundStyle(t.textMuted)
                         .fixedSize(horizontal: false, vertical: true)
@@ -722,7 +722,7 @@ public struct Stat: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(label.uppercased())
+            Text(CairnL10n.isChinese ? label.loc : label.loc.uppercased())
                 .font(.cairnScaled(size: 11, weight: .semibold))
                 .tracking(0.9)
                 .foregroundStyle(t.textMuted)
@@ -731,7 +731,7 @@ public struct Stat: View {
                 .tracking(-0.5)
                 .foregroundStyle(color ?? t.text)
             if let sub {
-                Text(sub)
+                Text(sub.loc)
                     .font(.cairnScaled(size: 12))
                     .foregroundStyle(t.textMuted)
             }
@@ -1200,7 +1200,7 @@ public struct SliderInputRow: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: style == .compact ? 8 : 6) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(label)
+                Text(label.loc)
                     .font(.cairnScaled(size: style == .compact ? 14 : 15))
                     .foregroundStyle(t.textBody)
                 Spacer(minLength: 8)
@@ -1214,7 +1214,7 @@ public struct SliderInputRow: View {
                 )
             }
             if style == .standard, let sub {
-                Text(sub)
+                Text(sub.loc)
                     .font(.cairnScaled(size: 12))
                     .foregroundStyle(t.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1435,7 +1435,7 @@ public struct CairnTabBar: View {
                             }
                         }
                         .frame(height: 22)
-                        Text(tab.label)
+                        Text(tab.label.loc)
                             .font(.cairnScaled(size: 11, weight: .medium))
                     }
                     .foregroundStyle(active.id == tab.id ? t.text : t.textMuted)
@@ -1443,7 +1443,7 @@ public struct CairnTabBar: View {
                     .padding(.vertical, 10)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(tab.label)
+                .accessibilityLabel(tab.label.loc)
                 .accessibilityAddTraits(active.id == tab.id ? [.isSelected] : [])
             }
         }
@@ -1579,7 +1579,7 @@ public struct CairnSegmentedPicker<Value: Hashable>: View {
                         )
                         .matchedGeometryEffect(id: "cairn-segmented-pill", in: pillNamespace)
                 }
-                Text(option.label)
+                Text(option.label.loc)
                     .font(.cairnScaled(size: 13, weight: .semibold))
                     .foregroundStyle(isSelected ? t.text : t.textMuted)
                     .padding(.vertical, 7)
@@ -1666,11 +1666,11 @@ public struct CairnRadioList<Value: Hashable>: View {
                 radioIndicator(isSelected: isSelected)
                     .padding(.top, 2)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(option.title)
+                    Text(option.title.loc)
                         .font(.cairnScaled(size: 15, weight: .semibold))
                         .foregroundStyle(t.text)
                     if let subtitle = option.subtitle {
-                        Text(subtitle)
+                        Text(subtitle.loc)
                             .font(.cairnScaled(size: 13))
                             .foregroundStyle(t.textMuted)
                             .fixedSize(horizontal: false, vertical: true)
@@ -1780,7 +1780,7 @@ public struct SyncPhaseChecklist: View {
             Image(systemName: "circle.dotted.circle")
                 .font(.cairnScaled(size: 12))
                 .foregroundStyle(t.pendingInk)
-            Text(phase.displayName)
+            Text(phase.displayName.loc)
                 .font(.cairnScaled(size: 12, weight: .medium))
                 .foregroundStyle(t.textBody)
             Spacer(minLength: 0)
@@ -1809,16 +1809,16 @@ public struct ProcessingBreakdown: View {
     public var body: some View {
         if deferredQueueCount > 0 || skipped > 0 {
             HStack(spacing: 4) {
-                Text("\(indexed.formatted(.number)) indexed")
+                Text(CairnL10n.isChinese ? "\(indexed.formatted(.number)) 已建立索引" : "\(indexed.formatted(.number)) indexed")
                     .foregroundStyle(t.textBody)
                 if deferredQueueCount > 0 {
                     Text("·").foregroundStyle(t.textHint)
-                    Text("\(deferredQueueCount.formatted(.number)) queued")
+                    Text(CairnL10n.isChinese ? "\(deferredQueueCount.formatted(.number)) 排队中" : "\(deferredQueueCount.formatted(.number)) queued")
                         .foregroundStyle(t.textMuted)
                 }
                 if skipped > 0 {
                     Text("·").foregroundStyle(t.textHint)
-                    Text("\(skipped.formatted(.number)) over cap")
+                    Text(CairnL10n.isChinese ? "\(skipped.formatted(.number)) 超出上限" : "\(skipped.formatted(.number)) over cap")
                         .foregroundStyle(t.textMuted)
                 }
             }

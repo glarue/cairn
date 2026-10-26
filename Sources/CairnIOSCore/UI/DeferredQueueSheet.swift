@@ -33,14 +33,14 @@ public struct DeferredQueueSheet: View {
     public var body: some View {
         VStack(spacing: 0) {
             AppHeader(
-                title: "Deferred queue",
-                subtitle: isLoading ? "Loading…" : "\(resolved.count) assets",
+                title: "Deferred queue".loc,
+                subtitle: isLoading ? "Loading…".loc : (CairnL10n.isChinese ? "\(resolved.count) 项照片" : "\(resolved.count) assets"),
                 leading: {
                     Button(action: onClose) {
                         HStack(spacing: 4) {
                             Image(systemName: "chevron.left")
                                 .font(.cairnScaled(size: 13, weight: .semibold))
-                            Text("Status")
+                            Text("Status".loc)
                                 .font(.cairnScaled(size: 15))
                         }
                         .foregroundStyle(t.textBody)
@@ -59,7 +59,7 @@ public struct DeferredQueueSheet: View {
                     let aboveCap = resolved.filter { $0.aboveCeiling }
 
                     if !queued.isEmpty {
-                        KeylineSection("Pending hash") {
+                        KeylineSection("Pending hash".loc) {
                             Text("\(queued.count)")
                                 .font(.cairnScaled(size: 11, weight: .semibold))
                                 .tracking(0.99)
@@ -78,7 +78,7 @@ public struct DeferredQueueSheet: View {
                     }
 
                     if !aboveCap.isEmpty {
-                        KeylineSection("Above size cap") {
+                        KeylineSection("Above size cap".loc) {
                             Text("\(aboveCap.count)")
                                 .font(.cairnScaled(size: 11, weight: .semibold))
                                 .tracking(0.99)
@@ -105,7 +105,7 @@ public struct DeferredQueueSheet: View {
                                 .font(.cairnScaled(size: 24, weight: .semibold))
                                 .foregroundStyle(t.verifiedInk)
                         }
-                        Text("Queue is empty")
+                        Text("Queue is empty".loc)
                             .font(.cairnScaled(size: 17, weight: .semibold))
                             .foregroundStyle(t.text)
                     }
@@ -169,15 +169,15 @@ public struct DeferredQueueSheet: View {
 
     private func reasonLabel(_ reason: DeferredHashEntry.DeferReason) -> String {
         switch reason {
-        case .tooLarge: "too large"
-        case .timedOut: "timed out"
-        case .noHashableResources: "no resources"
+        case .tooLarge: "too large".loc
+        case .timedOut: "timed out".loc
+        case .noHashableResources: "no resources".loc
         // The "above cap" group already gets its own section in the
         // sheet (resolved.aboveCeiling filter), but a row can still
         // carry this reason if the user changed the ceiling between
         // the hash attempt and now — keep the label short and aligned
         // with the section header copy.
-        case .aboveHardCeiling: "above cap"
+        case .aboveHardCeiling: "above cap".loc
         }
     }
 

@@ -549,31 +549,40 @@ public struct StatusScreen: View {
     }
 
     private var reconcilingSubhead: AttributedString {
-        var s = AttributedString("reconciling ")
-        s.foregroundColor = t.textMuted
-        var device = AttributedString("iPhone 15 Pro")
-        device.foregroundColor = t.textBody
-        var middle = AttributedString(" against ")
-        middle.foregroundColor = t.textMuted
-        var host = AttributedString(serverHost)
-        // `quiet` (Air Force Blue) instead of `textHint` — the
-        // server hostname is the one element in the subhead that's
-        // semantically "remote/networked", and the cool blue-gray
-        // makes it visually distinct from the local-device prose.
-        host.foregroundColor = t.quiet
-        host.font = .system(size: 12, design: .monospaced)
-        return s + device + middle + host
+        if CairnL10n.isChinese {
+            var s = AttributedString("正在比对 ")
+            s.foregroundColor = t.textMuted
+            var device = AttributedString("iPhone 15 Pro")
+            device.foregroundColor = t.textBody
+            var middle = AttributedString(" 与服务器 ")
+            middle.foregroundColor = t.textMuted
+            var host = AttributedString(serverHost)
+            host.foregroundColor = t.quiet
+            host.font = .system(size: 12, design: .monospaced)
+            return s + device + middle + host
+        } else {
+            var s = AttributedString("reconciling ")
+            s.foregroundColor = t.textMuted
+            var device = AttributedString("iPhone 15 Pro")
+            device.foregroundColor = t.textBody
+            var middle = AttributedString(" against ")
+            middle.foregroundColor = t.textMuted
+            var host = AttributedString(serverHost)
+            host.foregroundColor = t.quiet
+            host.font = .system(size: 12, design: .monospaced)
+            return s + device + middle + host
+        }
     }
 
     private var statusChip: some View {
         let (label, tone): (String, ChipTone) = {
             switch degraded {
-            case .none:           return ("synced", .verified)
-            case .serverDown:     return ("offline", .danger)
-            case .authStale:      return ("auth expired", .danger)
-            case .photosLimited:  return ("limited", .danger)
-            case .tinyLibrary:    return ("small library", .info)
-            case .sessionExpired: return ("signed out of immich", .pending)
+            case .none:           return ("synced".loc, .verified)
+            case .serverDown:     return ("offline".loc, .danger)
+            case .authStale:      return ("auth expired".loc, .danger)
+            case .photosLimited:  return ("limited".loc, .danger)
+            case .tinyLibrary:    return ("small library".loc, .info)
+            case .sessionExpired: return ("signed out of immich".loc, .pending)
             }
         }()
         return Chip(label: label, tone: tone)
@@ -593,9 +602,14 @@ public struct StatusScreen: View {
         Group { if !missingPermissions.isEmpty {
             Callout(.pending, icon: "exclamationmark.shield") {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("API key missing permissions").fontWeight(.semibold)
-                    Text("Required: \(missingPermissions.joined(separator: ", ")). Update your key in Immich to include these scopes.")
-                        .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                    Text("API key missing permissions".loc).fontWeight(.semibold)
+                    if CairnL10n.isChinese {
+                        Text("需要以下权限：\(missingPermissions.joined(separator: "、"))。请在 Immich 中更新密钥以包含这些权限范围。")
+                            .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text("Required: \(missingPermissions.joined(separator: ", ")). Update your key in Immich to include these scopes.")
+                            .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
             .padding(.horizontal, 16).padding(.bottom, 12)
@@ -609,14 +623,19 @@ public struct StatusScreen: View {
         case .serverDown:
             Callout(.danger, icon: "server.rack") {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Immich server unreachable").fontWeight(.semibold)
-                    (Text("Tried ") + Text(serverHost).font(.cairnScaled(size: 12, design: .monospaced)) + Text(" three times over 2m. Check VPN or server health, then retry."))
-                        .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                    Text("Immich server unreachable".loc).fontWeight(.semibold)
+                    if CairnL10n.isChinese {
+                        (Text("已在 2 分钟内尝试连接 ") + Text(serverHost).font(.cairnScaled(size: 12, design: .monospaced)) + Text(" 三次。请检查 VPN 或服务器状态后重试。"))
+                            .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        (Text("Tried ") + Text(serverHost).font(.cairnScaled(size: 12, design: .monospaced)) + Text(" three times over 2m. Check VPN or server health, then retry."))
+                            .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                    }
                     Button(action: onRetryConnection) {
                         HStack(spacing: 6) {
                             Image(systemName: "arrow.clockwise")
                                 .font(.cairnScaled(size: 12, weight: .semibold))
-                            Text("Retry connection")
+                            Text("Retry connection".loc)
                                 .font(.cairnScaled(size: 13, weight: .semibold))
                         }
                         .foregroundStyle(t.dangerInk)
@@ -633,8 +652,8 @@ public struct StatusScreen: View {
         case .authStale:
             Callout(.pending, icon: "key") {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("API key rejected").fontWeight(.semibold)
-                    Text("Server returned 401. Your key may have been revoked or expired. Paste a new one in Settings.")
+                    Text("API key rejected".loc).fontWeight(.semibold)
+                    Text("Server returned 401. Your key may have been revoked or expired. Paste a new one in Settings.".loc)
                         .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -643,9 +662,16 @@ public struct StatusScreen: View {
         case .photosLimited:
             Callout(.pending, icon: "photo.on.rectangle.angled") {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Photos access is Limited").fontWeight(.semibold)
-                    (Text("With Limited access, ") + .cairnWord + Text(" only sees the assets you picked. Everything else looks “missing” and would be flagged for deletion — dangerous. Grant Full access to continue."))
-                        .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                    Text("Photos access is Limited".loc).fontWeight(.semibold)
+                    if CairnL10n.isChinese {
+                        (Text("With Limited access, ".loc)
+                            + .cairnWord
+                            + Text(" only sees the assets you picked. Everything else looks “missing” and would be flagged for deletion — dangerous. Grant Full access to continue.".loc))
+                            .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        (Text("With Limited access, ") + .cairnWord + Text(" only sees the assets you picked. Everything else looks “missing” and would be flagged for deletion — dangerous. Grant Full access to continue."))
+                            .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
             .padding(.horizontal, 16).padding(.bottom, 12)
@@ -653,7 +679,7 @@ public struct StatusScreen: View {
         case .tinyLibrary:
             Callout(.pending, icon: "info.circle") {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Library is small").fontWeight(.semibold)
+                    Text("Library is small".loc).fontWeight(.semibold)
                     Text("Your iPhone has a small photo library. With fewer than ~200 assets, any single deletion is a large fraction of the library and the percent-based safety rail can't protect you as well. You can still sync — just treat the first run carefully.")
                         .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                 }
@@ -663,11 +689,11 @@ public struct StatusScreen: View {
         case .sessionExpired:
             Callout(.pending, icon: "person.crop.circle.badge.xmark") {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Signed out of Immich").fontWeight(.semibold)
-                    Text("Your Immich session was ended — likely from another device or the Immich web settings. Incremental sync has fallen back to the slower path; sign in again to restore it. Everything else keeps working.")
+                    Text("Signed out of Immich".loc).fontWeight(.semibold)
+                    Text("Your Immich session was ended — likely from another device or the Immich web settings. Incremental sync has fallen back to the slower path; sign in again to restore it. Everything else keeps working.".loc)
                         .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                     Button(action: onResumeSession) {
-                        Text("Sign in again")
+                        Text("Sign in again".loc)
                             .font(.cairnScaled(size: 13, weight: .semibold))
                             .foregroundStyle(t.primaryInk)
                             .padding(.horizontal, 14)
@@ -692,9 +718,14 @@ public struct StatusScreen: View {
             let tripCount = max(6, Int(Double(library.matched) * 0.023))
             Callout(.danger, icon: "exclamationmark.triangle") {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Safety rail tripped").fontWeight(.semibold)
-                    (Text("Last run would have trashed ") + Text("\(tripCount) assets").bold() + Text(" (") + Text("2.3%").bold() + Text(" of matched), above your ") + Text(String(format: "%.1f%%", maxDeletePercent)).bold() + Text(" cap. Review before re-running."))
-                        .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                    Text("Safety rail tripped".loc).fontWeight(.semibold)
+                    if CairnL10n.isChinese {
+                        (Text("上次运行本会移入废纸篓 ") + Text("\(tripCount) 项照片").bold() + Text("（") + Text("2.3%").bold() + Text(" 的匹配照片），超过了你设定的 ") + Text(String(format: "%.1f%%", maxDeletePercent)).bold() + Text(" 上限。请审核后再重新运行。"))
+                            .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        (Text("Last run would have trashed ") + Text("\(tripCount) assets").bold() + Text(" (") + Text("2.3%").bold() + Text(" of matched), above your ") + Text(String(format: "%.1f%%", maxDeletePercent)).bold() + Text(" cap. Review before re-running."))
+                            .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
             .padding(.horizontal, 16).padding(.bottom, 12)
@@ -702,8 +733,8 @@ public struct StatusScreen: View {
         case .dryRun:
             Callout(.info, icon: "info.circle") {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("First sync is a dry-run").fontWeight(.semibold)
-                    Text("We'll show exactly what would be trashed. Nothing gets touched on your server until you confirm.")
+                    Text("First sync is a dry-run".loc).fontWeight(.semibold)
+                    Text("We'll show exactly what would be trashed. Nothing gets touched on your server until you confirm.".loc)
                         .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -720,11 +751,16 @@ public struct StatusScreen: View {
             Button(action: onResumeInitialScan) {
                 Callout(.pending, icon: "sparkle.magnifyingglass") {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Initial scan pending").fontWeight(.semibold)
-                        (Text("Tap to index your library. ")
-                            + .cairnWord
-                            + Text(" needs a one-time SHA1 pass before it can tell real deletions apart from sync hiccups."))
-                            .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                        Text("Initial scan pending".loc).fontWeight(.semibold)
+                        if CairnL10n.isChinese {
+                            (Text("轻点以索引照片库。") + .cairnWord + Text(" 需要执行一次性的 SHA1 扫描，以便区分真实删除与同步异常。"))
+                                .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            (Text("Tap to index your library. ")
+                                + .cairnWord
+                                + Text(" needs a one-time SHA1 pass before it can tell real deletions apart from sync hiccups."))
+                                .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                        }
                     }
                 }
                 .contentShape(Rectangle())
@@ -753,8 +789,8 @@ public struct StatusScreen: View {
             Button(action: backlogTapTarget) {
                 Callout(.pending, icon: "bell.badge") {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("\(deletionBacklog) deletions waiting").fontWeight(.semibold)
-                        Text("Since your last trash run. Tap to review, or swipe to dismiss.")
+                        Text(CairnL10n.isChinese ? "\(deletionBacklog) 处删除等待处理" : "\(deletionBacklog) deletions waiting").fontWeight(.semibold)
+                        Text("Since your last trash run. Tap to review, or swipe to dismiss.".loc)
                             .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -782,7 +818,7 @@ public struct StatusScreen: View {
             Callout(.pending, icon: "arrow.uturn.backward.circle") {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(restoredAfterCairnTrashTitle).fontWeight(.semibold)
-                    Text("Open Immich → Trash to restore them there too. They'll hard-delete after 30 days.")
+                    Text("Open Immich → Trash to restore them there too. They'll hard-delete after 30 days.".loc)
                         .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -796,6 +832,9 @@ public struct StatusScreen: View {
     /// singular/plural handling. "1 photo" reads better than "1 photos."
     private var restoredAfterCairnTrashTitle: String {
         let n = restoredAfterCairnTrashCount
+        if CairnL10n.isChinese {
+            return "\(n) 张在本地恢复的照片也已在 Immich 废纸篓中"
+        }
         let noun = n == 1 ? "photo" : "photos"
         return "\(n) restored \(noun) also trashed in Immich"
     }
@@ -823,9 +862,9 @@ public struct StatusScreen: View {
             Button(action: onOpenPendingTrashes) {
                 Callout(.danger, icon: "exclamationmark.triangle") {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("\(pendingTrashStuckCount) trash \(pendingTrashStuckCount == 1 ? "request" : "requests") stuck")
+                        Text(CairnL10n.isChinese ? "\(pendingTrashStuckCount) 个移入废纸篓请求卡住" : "\(pendingTrashStuckCount) trash \(pendingTrashStuckCount == 1 ? "request" : "requests") stuck")
                             .fontWeight(.semibold)
-                        Text("Hit the retry limit. Tap to see what failed.")
+                        Text("Hit the retry limit. Tap to see what failed.".loc)
                             .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -838,9 +877,9 @@ public struct StatusScreen: View {
             Callout(.pending, icon: "arrow.clockwise") {
                 HStack(alignment: .top, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("\(pendingTrashCount) trash \(pendingTrashCount == 1 ? "request" : "requests") queued")
+                        Text(CairnL10n.isChinese ? "\(pendingTrashCount) 个移入废纸篓请求排队中" : "\(pendingTrashCount) trash \(pendingTrashCount == 1 ? "request" : "requests") queued")
                             .fontWeight(.semibold)
-                        Text("Will retry on next sync.")
+                        Text("Will retry on next sync.".loc)
                             .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer(minLength: 8)
@@ -848,7 +887,7 @@ public struct StatusScreen: View {
                         if isRetryingPendingTrashes {
                             ProgressView().controlSize(.small)
                         } else {
-                            Text("Retry now")
+                            Text("Retry now".loc)
                         }
                     }
                     .buttonStyle(.borderedProminent)
@@ -875,8 +914,13 @@ public struct StatusScreen: View {
                 Callout(.pending, icon: "questionmark.diamond") {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(inferredOrphanTitle).fontWeight(.semibold)
-                        (Text("Uploaded from this iPhone, then deleted before ") + .cairnWord + Text(" could index. Review before trashing."))
-                            .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                        if CairnL10n.isChinese {
+                            (Text("从本 iPhone 上传后在 ") + .cairnWord + Text(" 建立索引前被删除。移入废纸篓前请审核。"))
+                                .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            (Text("Uploaded from this iPhone, then deleted before ") + .cairnWord + Text(" could index. Review before trashing."))
+                                .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                        }
                     }
                 }
             }
@@ -888,6 +932,9 @@ public struct StatusScreen: View {
 
     private var inferredOrphanTitle: String {
         let n = inferredOrphanCount
+        if CairnL10n.isChinese {
+            return "Immich 上有 \(n) 张疑似孤儿照片"
+        }
         let noun = n == 1 ? "likely orphan" : "likely orphans"
         return "\(n) \(noun) on Immich"
     }
@@ -925,6 +972,9 @@ public struct StatusScreen: View {
     private func upToDateSubline(indexed: Int, total: Int) -> Text {
         let count = Text("\(indexed) of \(total)").bold()
         if indexed >= total {
+            if CairnL10n.isChinese {
+                return Text("无需移入废纸篓。已索引 ") + Text("\(indexed) / \(total)").bold() + Text(" 项照片。")
+            }
             return Text("Nothing new to trash. ") + count + Text(" assets indexed.")
         }
         let gap = max(0, total - indexed)
@@ -933,12 +983,19 @@ public struct StatusScreen: View {
         let untracked = max(0, gap - queued - aboveCap)
 
         var clauses: [String] = []
-        if queued > 0 { clauses.append("\(queued) queued for background hashing") }
-        if aboveCap > 0 { clauses.append("\(aboveCap) above your size cap") }
-        if untracked > 0 { clauses.append("\(untracked) not yet processed") }
-
-        let suffix = clauses.isEmpty ? "." : " — " + clauses.joined(separator: ", ") + "."
-        return Text("Nothing new to trash. ") + count + Text(" assets indexed") + Text(suffix)
+        if CairnL10n.isChinese {
+            if queued > 0 { clauses.append("\(queued) 项排队等待后台哈希") }
+            if aboveCap > 0 { clauses.append("\(aboveCap) 项超出大小上限") }
+            if untracked > 0 { clauses.append("\(untracked) 项尚未处理") }
+            let suffix = clauses.isEmpty ? "。" : " — " + clauses.joined(separator: "，") + "。"
+            return Text("无需移入废纸篓。已索引 ") + Text("\(indexed) / \(total)").bold() + Text(" 项照片") + Text(suffix)
+        } else {
+            if queued > 0 { clauses.append("\(queued) queued for background hashing") }
+            if aboveCap > 0 { clauses.append("\(aboveCap) above your size cap") }
+            if untracked > 0 { clauses.append("\(untracked) not yet processed") }
+            let suffix = clauses.isEmpty ? "." : " — " + clauses.joined(separator: ", ") + "."
+            return Text("Nothing new to trash. ") + count + Text(" assets indexed") + Text(suffix)
+        }
     }
 
     @ViewBuilder
@@ -949,59 +1006,57 @@ public struct StatusScreen: View {
                 case .upToDate(let indexed, let total):
                     Callout(.verified, icon: "checkmark.seal") {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Library in sync").fontWeight(.semibold)
+                            Text("Library in sync".loc).fontWeight(.semibold)
                             upToDateSubline(indexed: indexed, total: total)
                                 .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 case .journalCleared:
                     Callout(.verified, icon: "trash") {
-                        Text("Journal cleared.").fontWeight(.semibold)
+                        Text("Journal cleared.".loc).fontWeight(.semibold)
                     }
                 case .indexReset:
                     Callout(.verified, icon: "arrow.counterclockwise") {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Index reset").fontWeight(.semibold)
-                            Text("Next sync will re-enumerate your library from scratch.")
+                            Text("Index reset".loc).fontWeight(.semibold)
+                            Text("Next sync will re-enumerate your library from scratch.".loc)
                                 .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 case .rescanQueued:
                     Callout(.verified, icon: "arrow.triangle.2.circlepath") {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Rescan queued").fontWeight(.semibold)
-                            Text("The initial-scan screen will run a fresh full enumeration.")
+                            Text("Rescan queued".loc).fontWeight(.semibold)
+                            Text("The initial-scan screen will run a fresh full enumeration.".loc)
                                 .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 case .nothingToVerify:
                     Callout(.verified, icon: "checkmark.circle") {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Nothing to verify").fontWeight(.semibold)
-                            Text("No imputed entries in the cache — everything is already locally hashed.")
+                            Text("Nothing to verify".loc).fontWeight(.semibold)
+                            Text("No imputed entries in the cache — everything is already locally hashed.".loc)
                                 .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 case .limitedPhotosNotice:
-                    // .pending matches the Settings → Permissions
-                    // explanatory callout and signals "real
-                    // degradation, not an error" — same tone as the
-                    // inferred-orphan and mass-offload heads-ups.
                     Callout(.pending, icon: "exclamationmark.triangle") {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Limited Photos access").fontWeight(.semibold)
-                            (Text("Missed deletes will route to ") + Text("Pending review").fontWeight(.semibold) + Text(" for confirmation. See Settings → Permissions for detail."))
-                                .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                            Text("Limited Photos access".loc).fontWeight(.semibold)
+                            if CairnL10n.isChinese {
+                                (Text("遗漏的删除将转至") + Text("待审核").fontWeight(.semibold) + Text("以供确认。详情请见“设置 → 权限”。"))
+                                    .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                            } else {
+                                (Text("Missed deletes will route to ") + Text("Pending review").fontWeight(.semibold) + Text(" for confirmation. See Settings → Permissions for detail."))
+                                    .opacity(0.88).fixedSize(horizontal: false, vertical: true)
+                            }
                         }
                     }
                 case .offlineDetections(let count):
-                    // Server unreachable, but the local scan ran and
-                    // recorded the deletions. They'll appear as trash
-                    // candidates after the next successful sync.
                     Callout(.info, icon: "tray.and.arrow.down") {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("\(count) deletion\(count == 1 ? "" : "s") detected offline").fontWeight(.semibold)
-                            Text("Saved locally. Will sync to Immich on the next successful Sync.")
+                            Text(CairnL10n.isChinese ? "离线检测到 \(count) 处删除" : "\(count) deletion\(count == 1 ? "" : "s") detected offline").fontWeight(.semibold)
+                            Text("Saved locally. Will sync to Immich on the next successful Sync.".loc)
                                 .opacity(0.88).fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -1041,7 +1096,7 @@ public struct StatusScreen: View {
                     // ready-to-trash count + last-checked context
                     // continuously, with no transient UI disappearing.
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("READY TO TRASH")
+                        Text("Ready to trash".loc.uppercased())
                             .font(.cairnScaled(size: 11, weight: .semibold)).tracking(0.9)
                             .foregroundStyle(t.textMuted)
                         Button(action: { if library.candidates > 0 { onOpenDeleteQueue() } }) {
@@ -1053,7 +1108,9 @@ public struct StatusScreen: View {
                         }
                         .buttonStyle(.plain)
                         .disabled(library.candidates == 0)
-                        .accessibilityLabel("\(library.candidates) ready to trash. Tap to view.")
+                        .accessibilityLabel(CairnL10n.isChinese
+                            ? "\(library.candidates) 项待移入废纸篓。轻点查看。"
+                            : "\(library.candidates) ready to trash. Tap to view.")
                         if let checked = lastCheckedAt {
                             Text("Last checked \(Self.relativeTime(checked))")
                                 .font(.cairnScaled(size: 11))
@@ -1107,23 +1164,36 @@ public struct StatusScreen: View {
                         .buttonStyle(CairnPressStyle())
                         .disabled(syncBlocked || isSyncing)
                         .accessibilityLabel(isSyncing ? "Syncing" : (syncBlocked ? "Sync unavailable" : "Sync now"))
-                        Chip(label: String(format: "%.2f%% of synced", pct),
+                        Chip(label: String(format: CairnL10n.isChinese ? "占已同步的 %.2f%%" : "%.2f%% of synced", pct),
                              tone: withinBudget ? .verified : .pending)
                         HStack(spacing: 0) {
-                            Text(String(format: "stops above %.1f%% past %d items", maxDeletePercent, minDeleteFloor))
+                            Text(String(format: CairnL10n.isChinese ? "超过 %d 项且高于 %.1f%% 时终止" : "stops above %.1f%% past %d items", minDeleteFloor, maxDeletePercent))
                                 .font(.cairnScaled(size: 11))
                                 .foregroundStyle(t.textMuted)
                             HelpPopover {
-                                Text("**Two safety rails on every run.** Both must be true for cairn to actually move assets to Immich's Trash.")
+                                if CairnL10n.isChinese {
+                                    Text("**每次运行的两道安全防线。** 两者必须同时满足，cairn 才会真正将照片移入 Immich 废纸篓。")
 
-                                Text("**Percent threshold** — a run aborts if it would trash more than \(String(format: "%.1f%%", maxDeletePercent)) of your synced photos. Catches runaway deletions like accidental select-all, iCloud library glitches, etc.")
-                                    .padding(.top, 4)
+                                    Text("**百分比上限** — 若单次运行移入废纸篓的照片超过已同步照片的 \(String(format: "%.1f%%", maxDeletePercent))，将立即终止运行。防止因全选误删或 iCloud 照片图库异常导致的意外清空。")
+                                        .padding(.top, 4)
 
-                                Text("**Count floor** — the percent check only engages when a run would move more than \(minDeleteFloor) assets. At or below the floor the run proceeds without the percent check, so small real deletions on small libraries aren't blocked by 1% rounding to 1–2 photos.")
-                                    .padding(.top, 4)
+                                    Text("**数量触发门槛** — 仅当单次运行涉及的照片多于 \(minDeleteFloor) 项时才启用百分比检查。在门槛以下直接放行，避免小照片库因 1% 进位误伤 1–2 张真实删除。")
+                                        .padding(.top, 4)
 
-                                Text("Adjust both in Settings → Safety rails. Raise the floor if your library is small, or tighten the percent if you want stricter brakes.")
-                                    .padding(.top, 4)
+                                    Text("可在“设置 → 安全与限制”中调整两项参数。若照片库较小可调高数量门槛，若需要更严格的保护可调低百分比。")
+                                        .padding(.top, 4)
+                                } else {
+                                    Text("**Two safety rails on every run.** Both must be true for cairn to actually move assets to Immich's Trash.")
+
+                                    Text("**Percent threshold** — a run aborts if it would trash more than \(String(format: "%.1f%%", maxDeletePercent)) of your synced photos. Catches runaway deletions like accidental select-all, iCloud library glitches, etc.")
+                                        .padding(.top, 4)
+
+                                    Text("**Count floor** — the percent check only engages when a run would move more than \(minDeleteFloor) assets. At or below the floor the run proceeds without the percent check, so small real deletions on small libraries aren't blocked by 1% rounding to 1–2 photos.")
+                                        .padding(.top, 4)
+
+                                    Text("Adjust both in Settings → Safety rails. Raise the floor if your library is small, or tighten the percent if you want stricter brakes.")
+                                        .padding(.top, 4)
+                                }
                             }
                         }
                     }
@@ -1163,7 +1233,7 @@ public struct StatusScreen: View {
                 if activeEntry || postSyncEntry {
                     Button(action: onOpenSyncDetail) {
                         HStack(spacing: 4) {
-                            Text(activeEntry ? "Show details" : "Last sync details")
+                            Text(activeEntry ? "Show details".loc : "Last sync details".loc)
                                 .font(.cairnScaled(size: 12, weight: .medium))
                             // No "· N ago" timestamp here: it bound to the
                             // same `lastCheckedAt` as the "Last checked N ago"
@@ -1252,7 +1322,7 @@ public struct StatusScreen: View {
                                     .controlSize(.mini)
                                     .tint(t.textMuted)
                             }
-                            Text(cancelRequested ? "Cancelling…" : "Cancel")
+                            Text(cancelRequested ? "Cancelling…".loc : "Cancel".loc)
                                 .font(.cairnScaled(size: 13, weight: .semibold))
                                 .tracking(0.66)
                                 .foregroundStyle(cancelRequested ? t.textMuted : t.dangerInk)
@@ -1310,7 +1380,7 @@ public struct StatusScreen: View {
                     Text("\(pendingReviewCount)")
                         .font(.cairnScaled(size: 28, weight: .semibold).monospacedDigit())
                         .foregroundStyle(t.pendingInk)
-                    Text(bigLabel)
+                    Text(bigLabel.loc)
                         .font(.cairnScaled(size: 14, weight: .medium))
                         .foregroundStyle(t.pendingInk)
                 }
@@ -1321,7 +1391,7 @@ public struct StatusScreen: View {
                             .font(.cairnScaled(size: 11, weight: .medium))
                             .foregroundStyle(t.textMuted)
                     } else if quarantineCount > 0 && quarantineCount < pendingReviewCount {
-                        Text("\(quarantineCount) in quarantine")
+                        Text(CairnL10n.isChinese ? "\(quarantineCount) 项处于保护期" : "\(quarantineCount) in quarantine")
                             .font(.cairnScaled(size: 11, weight: .medium))
                             .foregroundStyle(t.textMuted)
                     }
@@ -1337,7 +1407,9 @@ public struct StatusScreen: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(CairnPressStyle())
-        .accessibilityLabel("\(quarantineCount) items in quarantine. Tap to review.")
+        .accessibilityLabel(CairnL10n.isChinese
+            ? "\(quarantineCount) 项处于保护期。轻点审核。"
+            : "\(quarantineCount) items in quarantine. Tap to review.")
         // Stable hook for the screenshots UI test — display copy
         // on this button has changed across releases ("Pending
         // review: N" → "N in quarantine") and may again, so the
@@ -1355,7 +1427,7 @@ public struct StatusScreen: View {
                         .font(.cairnScaled(size: 12, weight: .semibold))
                         .foregroundStyle(t.infoInk)
                     if deferredQueue.count > 0 {
-                        Text("\(deferredQueue.count.formatted(.number)) not yet indexed")
+                        Text(CairnL10n.isChinese ? "\(deferredQueue.count.formatted(.number)) 项尚未索引" : "\(deferredQueue.count.formatted(.number)) not yet indexed")
                             .font(.cairnScaled(size: 13, weight: .medium))
                             .foregroundStyle(t.textMuted)
                     }
@@ -1363,14 +1435,14 @@ public struct StatusScreen: View {
                         if deferredQueue.count > 0 {
                             Text("·").font(.cairnScaled(size: 13)).foregroundStyle(t.textHint)
                         }
-                        Text("\(deferredQueue.aboveCeiling.formatted(.number)) above cap")
+                        Text(CairnL10n.isChinese ? "\(deferredQueue.aboveCeiling.formatted(.number)) 项超出大小上限" : "\(deferredQueue.aboveCeiling.formatted(.number)) above cap")
                             .font(.cairnScaled(size: 13, weight: .medium))
                             .foregroundStyle(t.textHint)
                     }
                     Spacer()
                     if deferredQueue.count > 0 {
                         Button(action: onForceDrainDeferred) {
-                            Text("Hash now")
+                            Text("Hash now".loc)
                                 .font(.cairnScaled(size: 12, weight: .semibold))
                                 .foregroundStyle(t.primaryInk)
                                 .padding(.horizontal, 10)
@@ -1397,58 +1469,53 @@ public struct StatusScreen: View {
 
     static func relativeTime(_ date: Date) -> String {
         let seconds = Int(Date().timeIntervalSince(date))
-        if seconds < 60 { return "just now" }
+        if seconds < 60 { return "just now".loc }
         let minutes = seconds / 60
-        if minutes < 60 { return "\(minutes)m ago" }
+        if minutes < 60 { return CairnL10n.isChinese ? "\(minutes) 分钟前" : "\(minutes)m ago" }
         let hours = minutes / 60
-        if hours < 24 { return "\(hours)h ago" }
+        if hours < 24 { return CairnL10n.isChinese ? "\(hours) 小时前" : "\(hours)h ago" }
         let days = hours / 24
-        return "\(days)d ago"
+        return CairnL10n.isChinese ? "\(days) 天前" : "\(days)d ago"
     }
 
     static func relativeDay(_ date: Date) -> String {
-        // Ceiling of the remaining seconds — the SAME rounding as
-        // PendingReviewScreen's per-item "Trashes in N days" countdown, so
-        // the banner's "next in N days" matches the soonest card in the
-        // drill-down. Previously this used calendar-day truncation
-        // (`dateComponents([.day])`), which disagreed with the cards by up
-        // to a day. Keep the two in sync if either changes.
         let remaining = date.timeIntervalSinceNow
         let days = max(1, Int((remaining / 86_400).rounded(.up)))
+        if CairnL10n.isChinese { return "\(days) 天" }
         return days == 1 ? "1 day" : "\(days) days"
     }
 
     private var syncCtaLabel: String {
-        if syncBlocked { return "Can’t sync — see banner" }
+        if syncBlocked { return "Can’t sync — see banner".loc }
         if isSyncing {
             switch syncPhase {
             case .hashing:
                 if let progress = syncProgress, progress.total > 0 {
-                    return "Processing \(progress.hashed.formatted(.number)) / \(progress.total.formatted(.number))"
+                    return CairnL10n.isChinese ? "正在处理 \(progress.hashed.formatted(.number)) / \(progress.total.formatted(.number))" : "Processing \(progress.hashed.formatted(.number)) / \(progress.total.formatted(.number))"
                 }
-                return "Indexing…"
+                return "Indexing…".loc
             case .preparing:
-                return "Preparing…"
+                return "Preparing…".loc
             case .fetchingServer:
                 if let expected = serverAssetsExpected, expected > 0 {
-                    return "Fetching server · \(serverAssetsFetched.formatted(.number)) / \(expected.formatted(.number))"
+                    return CairnL10n.isChinese ? "正在获取服务器 · \(serverAssetsFetched.formatted(.number)) / \(expected.formatted(.number))" : "Fetching server · \(serverAssetsFetched.formatted(.number)) / \(expected.formatted(.number))"
                 }
                 if serverAssetsFetched > 0 {
-                    return "Fetching server · \(serverAssetsFetched.formatted(.number))"
+                    return CairnL10n.isChinese ? "正在获取服务器 · \(serverAssetsFetched.formatted(.number))" : "Fetching server · \(serverAssetsFetched.formatted(.number))"
                 }
-                return "Fetching server data…"
+                return "Fetching server data…".loc
             case .imputingFromServer:
-                return "Matching from server…"
+                return "Matching from server…".loc
             case .reconciling:
-                return "Reconciling…"
+                return "Reconciling…".loc
             case .finalizing:
-                return "Finalizing…"
+                return "Finalizing…".loc
             case .idle:
-                return "Syncing…"
+                return "Syncing…".loc
             }
         }
-        if appState == .thresholdTripped { return "Review before syncing" }
-        return "Review & sync"
+        if appState == .thresholdTripped { return "Review before syncing".loc }
+        return "Review & sync".loc
     }
 
     // MARK: - Library stats
@@ -1460,17 +1527,17 @@ public struct StatusScreen: View {
                 // distinct hues — reads as a color-keyed pipeline:
                 // orange (the device, the source) → green (indexed,
                 // ready) → blue (the server, the destination).
-                Stat(label: "On iPhone", value: library.local.formatted(.number), sub: "current", color: t.accentInk)
+                Stat(label: "On iPhone".loc, value: library.local.formatted(.number), sub: "current".loc, color: t.accentInk)
                 Rectangle().fill(t.divider).frame(width: 0.5)
                 Stat(
-                    label: "Indexed",
+                    label: "Indexed".loc,
                     value: library.indexedKnown ? library.indexed.formatted(.number) : "—",
-                    sub: library.indexedKnown ? "SHA1 set" : "not yet calculated",
+                    sub: library.indexedKnown ? "SHA1 set".loc : "not yet calculated".loc,
                     color: t.verifiedInk
                 )
                 Rectangle().fill(t.divider).frame(width: 0.5)
-                Stat(label: "On server", value: library.server.formatted(.number),
-                     sub: "\(library.matched.formatted(.number)) matched", color: t.infoInk)
+                Stat(label: "On server".loc, value: library.server.formatted(.number),
+                     sub: CairnL10n.isChinese ? "\(library.matched.formatted(.number)) 项已匹配" : "\(library.matched.formatted(.number)) matched", color: t.infoInk)
             }
             .padding(18)
         }
@@ -1489,7 +1556,7 @@ public struct StatusScreen: View {
                 }
                 Button(action: onSeeAllRuns) {
                     HStack(spacing: 6) {
-                        Text("See all runs")
+                        Text("See all runs".loc)
                             .font(.cairnScaled(size: 13, weight: .medium))
                         Image(systemName: "chevron.right")
                             .font(.cairnScaled(size: 10, weight: .semibold))
@@ -1727,7 +1794,7 @@ public struct StatusScreen: View {
                     }
 
                     if hideRoutineSyncs && hiddenCount > 0 {
-                        Text("\(hiddenCount) routine sync\(hiddenCount == 1 ? "" : "s") hidden")
+                        Text(CairnL10n.isChinese ? "已隐藏 \(hiddenCount) 次常规同步" : "\(hiddenCount) routine sync\(hiddenCount == 1 ? "" : "s") hidden")
                             .font(.cairnScaled(size: 11))
                             .foregroundStyle(t.textHint)
                             .padding(.top, 2)
@@ -1754,7 +1821,7 @@ public struct StatusScreen: View {
                                   ? "line.3.horizontal.decrease.circle.fill"
                                   : "line.3.horizontal.decrease.circle")
                     .font(.cairnScaled(size: 11, weight: .semibold))
-                Text(hideRoutineSyncs ? "Hiding routine syncs" : "Showing all events")
+                Text(hideRoutineSyncs ? "Hiding routine syncs".loc : "Showing all events".loc)
                     .font(.cairnScaled(size: 11, weight: .semibold))
             }
             .padding(.horizontal, 8)
@@ -1774,12 +1841,15 @@ public struct StatusScreen: View {
     /// who's confused why the card is empty has a path forward.
     private func journalEmptyMessage(hidden: Int) -> String {
         if journalTail.isEmpty {
-            return "No events yet. Events appear here after the first sync."
+            return "No events yet. Events appear here after the first sync.".loc
         }
         if hidden > 0 {
+            if CairnL10n.isChinese {
+                return "最近的 \(hidden) 条记录均为常规同步。轻点上方胶囊按钮可显示它们。"
+            }
             return "All \(hidden) recent event\(hidden == 1 ? "" : "s") \(hidden == 1 ? "is" : "are") routine syncs. Tap the chip to show them."
         }
-        return "No events to show."
+        return "No events to show.".loc
     }
 
     /// How many journal rows show in the collapsed state. Everything
@@ -2533,16 +2603,18 @@ private struct SyncBundleHeader: View {
                 // syncStarted message format: "trigger=background"
                 return entry.message.replacingOccurrences(of: "trigger=", with: "")
             })
-        let label = runCount == 1 ? "sync" : "syncs"
+        let label = CairnL10n.isChinese ? "次同步" : (runCount == 1 ? "sync" : "syncs")
         let triggerSuffix: String
         if triggers.isEmpty {
             triggerSuffix = ""
         } else if triggers.count == 1, let only = triggers.first {
-            triggerSuffix = " · trigger=\(only)"
+            triggerSuffix = CairnL10n.isChinese ? " · 触发源=\(only)" : " · trigger=\(only)"
         } else {
-            triggerSuffix = " · trigger=mixed"
+            triggerSuffix = CairnL10n.isChinese ? " · 触发源=混合" : " · trigger=mixed"
         }
-        return "\(runCount) \(label)\(triggerSuffix)"
+        return CairnL10n.isChinese
+            ? "\(runCount) \(label)\(triggerSuffix)"
+            : "\(runCount) \(label)\(triggerSuffix)"
     }
 
     private var timeRange: String {
@@ -2843,7 +2915,7 @@ private struct Chip: View {
             Circle()
                 .fill(dotColor)
                 .frame(width: 6, height: 6)
-            Text(label)
+            Text(label.loc)
                 .font(.cairnScaled(size: 11, weight: .semibold))
         }
         .padding(.horizontal, 8)
@@ -2974,7 +3046,7 @@ private struct RunRow: View {
                                 .font(.cairnScaled(size: 14, weight: .medium))
                                 .foregroundStyle(t.text)
                             if run.restored > 0 {
-                                Chip(label: "\(run.restored) restored", tone: .neutral)
+                                Chip(label: CairnL10n.isChinese ? "\(run.restored) 项已恢复" : "\(run.restored) restored", tone: .neutral)
                             }
                         }
                         HStack(spacing: 4) {
@@ -3006,7 +3078,7 @@ private struct RunRow: View {
         if run.status == .aborted { return "Aborted" }
         if run.dryRun { return "Dry-run" }
         if run.trashed == 0 { return "No changes" }
-        return "\(run.trashed) trashed"
+        return CairnL10n.isChinese ? "\(run.trashed) 项已移入废纸篓" : "\(run.trashed) trashed"
     }
 
     private var iconName: String {

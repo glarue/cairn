@@ -59,17 +59,17 @@ public struct ApiKeyDetailSheet: View {
         }
         .background(t.bg)
         .scrollDismissesKeyboard(.interactively)
-        .alert("Disconnect server?", isPresented: $pendingDisconnect) {
-            Button("Cancel", role: .cancel) {}
-            Button("Disconnect", role: .destructive) { onDisconnect() }
+        .alert("Disconnect server?".loc, isPresented: $pendingDisconnect) {
+            Button("Cancel".loc, role: .cancel) {}
+            Button("Disconnect".loc, role: .destructive) { onDisconnect() }
         } message: {
-            Text("Forgets your Immich URL and API key, and drops the cached thumbnails fetched with them. You'll land back on the onboarding flow — indexed state on this device is preserved for when you sign in again.")
+            Text("Forgets your Immich URL and API key, and drops the cached thumbnails fetched with them. You'll land back on the onboarding flow — indexed state on this device is preserved for when you sign in again.".loc)
         }
     }
 
     private var header: some View {
         HStack {
-            Text("API key")
+            Text("API key".loc)
                 .font(.cairnScaled(size: 22, weight: .semibold))
                 .tracking(-0.45)
                 .foregroundStyle(t.text)
@@ -82,22 +82,30 @@ public struct ApiKeyDetailSheet: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Close")
+            .accessibilityLabel("Close".loc)
         }
     }
 
     private var replaceSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Replace key")
+            Text("Replace key".loc)
                 .font(.cairnScaled(size: 13, weight: .semibold))
                 .tracking(0.4)
                 .foregroundStyle(t.textBody)
-            (Text("Paste a new API key for the same Immich account. ") + .cairnWord + Text(" verifies it and swaps it in — your indexed state, journal, and run history are kept. Use this to rotate a key without re-onboarding."))
-                .font(.cairnScaled(size: 13))
-                .foregroundStyle(t.textMuted)
-                .lineSpacing(3)
-                .fixedSize(horizontal: false, vertical: true)
-            ApiKeyInput(text: $newKey, placeholder: "paste new API key")
+            if CairnL10n.isChinese {
+                (Text("为同一 Immich 账户粘贴新的 API 密钥。") + .cairnWord + Text(" 将进行验证并替换 — 你的已索引状态、日志和运行历史都将保留。适用于在无需重新配置的情况下轮换密钥。"))
+                    .font(.cairnScaled(size: 13))
+                    .foregroundStyle(t.textMuted)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                (Text("Paste a new API key for the same Immich account. ") + .cairnWord + Text(" verifies it and swaps it in — your indexed state, journal, and run history are kept. Use this to rotate a key without re-onboarding."))
+                    .font(.cairnScaled(size: 13))
+                    .foregroundStyle(t.textMuted)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            ApiKeyInput(text: $newKey, placeholder: "paste new API key".loc)
                 .onChange(of: newKey) { _, _ in
                     // A fresh edit invalidates the prior result.
                     replaceError = nil
@@ -105,7 +113,7 @@ public struct ApiKeyDetailSheet: View {
                 }
             replaceButton
             if let replaceError {
-                Text(replaceError)
+                Text(replaceError.loc)
                     .font(.cairnScaled(size: 13))
                     .foregroundStyle(t.dangerInk)
                     .fixedSize(horizontal: false, vertical: true)
@@ -114,7 +122,7 @@ public struct ApiKeyDetailSheet: View {
             if replaceSucceeded {
                 HStack(spacing: 5) {
                     Image(systemName: "checkmark.circle")
-                    Text("Key replaced. Your index and history are unchanged.")
+                    Text("Key replaced. Your index and history are unchanged.".loc)
                 }
                 .font(.cairnScaled(size: 13))
                 .foregroundStyle(t.verifiedInk)
@@ -131,7 +139,7 @@ public struct ApiKeyDetailSheet: View {
                 if isReplacing {
                     ProgressView().controlSize(.small).tint(t.primaryInk)
                 }
-                Text(isReplacing ? "Verifying…" : "Verify & replace")
+                Text(isReplacing ? "Verifying…".loc : "Verify & replace".loc)
                     .font(.cairnScaled(size: 15, weight: .semibold))
                     .foregroundStyle(t.primaryInk)
             }
@@ -141,13 +149,13 @@ public struct ApiKeyDetailSheet: View {
         }
         .buttonStyle(.plain)
         .disabled(!canReplace || isReplacing)
-        .accessibilityLabel("Verify and replace API key")
+        .accessibilityLabel("Verify and replace API key".loc)
     }
 
     private var disconnectSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Button(action: { pendingDisconnect = true }) {
-                Text("Disconnect server")
+                Text("Disconnect server".loc)
                     .font(.cairnScaled(size: 15, weight: .semibold))
                     .foregroundStyle(t.dangerInk)
                     .frame(maxWidth: .infinity, minHeight: 48)
@@ -158,8 +166,8 @@ public struct ApiKeyDetailSheet: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Disconnect server")
-            Text("Forgets your Immich URL and API key and returns to onboarding. Use this to switch to a different server or account.")
+            .accessibilityLabel("Disconnect server".loc)
+            Text("Forgets your Immich URL and API key and returns to onboarding. Use this to switch to a different server or account.".loc)
                 .font(.cairnScaled(size: 12))
                 .foregroundStyle(t.textMuted)
                 .fixedSize(horizontal: false, vertical: true)

@@ -58,22 +58,22 @@ public struct ExcludedScreen: View {
         // "Clear all" confirm dialog. The prototype uses window.confirm with
         // copy: "Unexclude all <N> assets? They'll be eligible for future runs again."
         .confirmationDialog(
-            "Unexclude all \(entries.count) \(entries.count == 1 ? "asset" : "assets")?",
+            CairnL10n.isChinese ? "取消排除全部 \(entries.count) 项资产？" : "Unexclude all \(entries.count) \(entries.count == 1 ? "asset" : "assets")?",
             isPresented: $pendingClearAll,
             titleVisibility: .visible
         ) {
-            Button("Unexclude all", role: .destructive) {
+            Button("Unexclude all".loc, role: .destructive) {
                 onUnexclude(entries.map { $0.filename })
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel".loc, role: .cancel) {}
         } message: {
-            Text("They'll be eligible for future runs again.")
+            Text("They'll be eligible for future runs again.".loc)
         }
         // Per-row remove confirm — mirrors the prototype's toast-on-confirm
         // pattern. We don't ship a toast system here; the closure handoff
         // is the seam.
         .confirmationDialog(
-            pendingRemoval.map { "Remove \($0.filename) from excluded list?" } ?? "",
+            pendingRemoval.map { CairnL10n.isChinese ? "从排除列表中移除 \($0.filename)？" : "Remove \($0.filename) from excluded list?" } ?? "",
             isPresented: Binding(
                 get: { pendingRemoval != nil },
                 set: { if !$0 { pendingRemoval = nil } }
@@ -81,13 +81,13 @@ public struct ExcludedScreen: View {
             titleVisibility: .visible
         ) {
             if let entry = pendingRemoval {
-                Button("Remove", role: .destructive) {
+                Button("Remove".loc, role: .destructive) {
                     onUnexclude([entry.filename])
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Cancel".loc, role: .cancel) {}
             }
         } message: {
-            Text("Future runs can move this to Immich's Trash again.")
+            Text("Future runs can move this to Immich's Trash again.".loc)
         }
     }
 
@@ -95,17 +95,19 @@ public struct ExcludedScreen: View {
 
     private var header: some View {
         AppHeader(
-            title: "Excluded",
+            title: "Excluded".loc,
             // Subtitle copy verbatim from screens/excluded.jsx.
             subtitle: entries.isEmpty
-                ? "Nothing excluded — every indexed asset is fair game"
-                : "\(entries.count) \(entries.count == 1 ? "asset" : "assets") protected from future runs",
+                ? "Nothing excluded — every indexed asset is fair game".loc
+                : (CairnL10n.isChinese
+                    ? "\(entries.count) 项资产受到保护，不会在后续运行中处理"
+                    : "\(entries.count) \(entries.count == 1 ? "asset" : "assets") protected from future runs"),
             leading: {
                 Button(action: onBack) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
                             .font(.cairnScaled(size: 13, weight: .semibold))
-                        Text("Settings")
+                        Text("Settings".loc)
                             .font(.cairnScaled(size: 15))
                     }
                     .foregroundStyle(t.textBody)
@@ -132,19 +134,30 @@ public struct ExcludedScreen: View {
             .padding(.bottom, 14)
 
             // Copy verbatim from screens/excluded.jsx::EmptyState.
-            Text("No assets excluded")
+            Text("No assets excluded".loc)
                 .font(.cairnScaled(size: 17, weight: .semibold))
                 .foregroundStyle(t.text)
                 .padding(.bottom, 6)
 
-            (Text("Open any run, select the assets you want to keep in scope, and tap ")
-                + Text("Exclude").foregroundColor(t.textBody).bold()
-                + Text(". They'll show up here."))
-                .font(.cairnScaled(size: 13))
-                .foregroundStyle(t.textMuted)
-                .multilineTextAlignment(.center)
-                .lineSpacing(2)
-                .frame(maxWidth: 280)
+            if CairnL10n.isChinese {
+                (Text("打开任意运行记录，选择需要保留的照片，轻点 ")
+                    + Text("排除").foregroundColor(t.textBody).bold()
+                    + Text("。它们将显示在此处。"))
+                    .font(.cairnScaled(size: 13))
+                    .foregroundStyle(t.textMuted)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(2)
+                    .frame(maxWidth: 280)
+            } else {
+                (Text("Open any run, select the assets you want to keep in scope, and tap ")
+                    + Text("Exclude").foregroundColor(t.textBody).bold()
+                    + Text(". They'll show up here."))
+                    .font(.cairnScaled(size: 13))
+                    .foregroundStyle(t.textMuted)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(2)
+                    .frame(maxWidth: 280)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 40)
@@ -156,8 +169,13 @@ public struct ExcludedScreen: View {
 
     private var explainerCard: some View {
         Callout(.info, icon: "shield") {
-            (Text("Excluded assets stay indexed — ") + .cairnWord + Text(" still knows they exist — but every future reconcile will skip them. Useful for photos you'd rather keep on the server even if they're gone from the phone."))
-                .fixedSize(horizontal: false, vertical: true)
+            if CairnL10n.isChinese {
+                (Text("已排除的照片仍保持索引 — ") + .cairnWord + Text(" 仍知道它们的存在 — 但未来每次对齐都会跳过它们。适用于即使从手机中删除也希望保留在服务器上的照片。"))
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                (Text("Excluded assets stay indexed — ") + .cairnWord + Text(" still knows they exist — but every future reconcile will skip them. Useful for photos you'd rather keep on the server even if they're gone from the phone."))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
@@ -166,11 +184,11 @@ public struct ExcludedScreen: View {
     // MARK: - Section header with "Clear all"
 
     private var sectionHeader: some View {
-        KeylineSection("Protected assets") {
+        KeylineSection("Protected assets".loc) {
             Button {
                 pendingClearAll = true
             } label: {
-                Text("Clear all")
+                Text(CairnL10n.isChinese ? "全部清除" : "Clear all")
                     .font(.cairnScaled(size: 11, weight: .semibold))
                     .tracking(0.99)
                     .foregroundStyle(t.textMuted)
@@ -233,7 +251,7 @@ private struct ExcludedRow: View {
                     }
                     if let runSuffix = runSuffix {
                         Text("·")
-                        (Text("from run ")
+                        (Text("From run ".loc)
                             + Text(runSuffix).font(.cairnScaled(size: 11.5, design: .monospaced)))
                     }
                 }
@@ -244,8 +262,10 @@ private struct ExcludedRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             CairnChip(
-                "Remove",
-                accessibilityLabel: "Remove \(entry.filename) from excluded list",
+                "Remove".loc,
+                accessibilityLabel: CairnL10n.isChinese
+                    ? "从排除列表移除 \(entry.filename)"
+                    : "Remove \(entry.filename) from excluded list",
                 action: onRemove
             )
         }

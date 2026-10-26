@@ -65,6 +65,7 @@ public struct CairnAppRoot: View {
     }
 
     public var body: some View {
+        let _ = { CairnL10n.currentLanguage = model.settings.appLanguage }()
         bodyContent
             #if canImport(UIKit)
             .sheet(isPresented: Binding(
@@ -78,16 +79,16 @@ public struct CairnAppRoot: View {
             }
             #endif
             .alert(
-                "Import complete",
+                "Import complete".loc,
                 isPresented: Binding(
                     get: { importResult != nil },
                     set: { if !$0 { importResult = nil } }
                 ),
                 presenting: importResult
             ) { _ in
-                Button("OK", role: .cancel) { importResult = nil }
+                Button("OK".loc, role: .cancel) { importResult = nil }
             } message: { result in
-                Text(importResultMessage(for: result))
+                Text(importResultMessage(for: result).loc)
             }
             // Persist every settings mutation. No explicit save UI — each
             // slider / toggle commit flows straight to disk. Debouncing
@@ -166,6 +167,8 @@ public struct CairnAppRoot: View {
         // any view that renders a time (RunsScreen rows, journal tail
         // — via refresh — etc.) reads from a single source.
         .environment(\.cairnTimeFormat, model.settings.timeDisplayFormat)
+        .environment(\.locale, CairnL10n.currentLocale)
+        .id("cairn-root-\(model.settings.appLanguage.rawValue)")
         .animation(reduceMotion ? .none : .snappy(duration: 0.18), value: model.needsOnboarding)
         .animation(reduceMotion ? .none : .snappy(duration: 0.18), value: model.hasCompletedInitialScan)
         .animation(reduceMotion ? .none : .snappy(duration: 0.18), value: model.settingsRoute)
@@ -182,14 +185,14 @@ public struct CairnAppRoot: View {
         // permission denied, API key rejected, network down) and the user
         // would see a "tap does nothing" interaction with no feedback.
         .alert(
-            "Couldn't finish",
+            "Couldn't finish".loc,
             isPresented: Binding(
                 get: { model.lastError != nil },
                 set: { if !$0 { model.lastError = nil } }
             ),
             presenting: model.lastError
         ) { _ in
-            Button("OK", role: .cancel) { model.lastError = nil }
+            Button("OK".loc, role: .cancel) { model.lastError = nil }
         } message: { message in
             Text(message)
         }
@@ -216,7 +219,9 @@ public struct CairnAppRoot: View {
                     let url = try await LogExporter.export()
                     exportedFileURL = url
                 } catch {
-                    model.lastError = "Couldn't export logs: \(error.localizedDescription)"
+                    model.lastError = CairnL10n.isChinese
+                        ? "无法导出日志：\(error.localizedDescription)"
+                        : "Couldn't export logs: \(error.localizedDescription)"
                 }
             }
             #endif
@@ -224,6 +229,25 @@ public struct CairnAppRoot: View {
     }
 
     private func importResultMessage(for result: CairnImportResult) -> String {
+        if CairnL10n.isChinese {
+            var parts: [String] = []
+            parts.append("已处理 \(result.serverCount) 个服务器的数据。")
+            parts.append("新增 \(result.observedAdded) 个校验值、\(result.exclusionsAdded) 项排除、\(result.journalLinesAppended) 行日志。")
+            if result.settingsApplied {
+                parts.append("已应用设置。")
+            }
+            switch result.hashCacheSkippedReason {
+            case .deviceMismatch:
+                parts.append("哈希缓存已跳过 — 备份来自其他设备（或导出后本 iPhone 曾从备份恢复）。照片将在下次同步时重新计算哈希。")
+            case .missingIDFV:
+                parts.append("哈希缓存已跳过 — 备份未包含设备指纹，cairn 无法确认恢复是否安全。照片将在下次同步时重新计算哈希。")
+            case nil:
+                if result.hashCacheImported > 0 {
+                    parts.append("哈希缓存已恢复 — 导入了 \(result.hashCacheImported.formatted(.number)) 行，无需重新计算。")
+                }
+            }
+            return parts.joined()
+        }
         var parts: [String] = []
         parts.append("\(result.serverCount) server\(result.serverCount == 1 ? "" : "s") processed.")
         parts.append("\(result.observedAdded) checksums added, \(result.exclusionsAdded) exclusions added, \(result.journalLinesAppended) journal lines appended.")

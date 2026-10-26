@@ -68,7 +68,7 @@ public struct SessionSignInSheet: View {
 
     private var header: some View {
         HStack {
-            Text("Sign in for incremental sync")
+            Text("Sign in for incremental sync".loc)
                 .font(.cairnScaled(size: 22, weight: .semibold))
                 .tracking(-0.45)
                 .foregroundStyle(t.text)
@@ -81,12 +81,12 @@ public struct SessionSignInSheet: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Close")
+            .accessibilityLabel("Close".loc)
         }
     }
 
     private var explainer: some View {
-        Text("Incremental sync talks to an Immich endpoint that doesn't accept API keys. Signing in with your Immich email and password gives cairn a session token, stored locally in your iPhone's Keychain. Cairn uses it only for that one streaming path — every other request still uses your API key. Sign out anytime to drop the token; everything else keeps working.")
+        Text("Incremental sync talks to an Immich endpoint that doesn't accept API keys. Signing in with your Immich email and password gives cairn a session token, stored locally in your iPhone's Keychain. Cairn uses it only for that one streaming path — every other request still uses your API key. Sign out anytime to drop the token; everything else keeps working.".loc)
             .font(.cairnScaled(size: 13))
             .foregroundStyle(t.textMuted)
             .lineSpacing(3)
@@ -95,7 +95,7 @@ public struct SessionSignInSheet: View {
 
     private var emailField: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Email")
+            Text("Email".loc)
                 .font(.cairnScaled(size: 13, weight: .medium))
                 .foregroundStyle(t.textBody)
             TextField("you@example.com", text: $email)
@@ -114,7 +114,7 @@ public struct SessionSignInSheet: View {
                     RoundedRectangle(cornerRadius: 7, style: .continuous)
                         .strokeBorder(t.divider, lineWidth: 0.5)
                 )
-                .accessibilityLabel("Email")
+                .accessibilityLabel("Email".loc)
         }
     }
 
@@ -174,7 +174,7 @@ public struct SessionSignInSheet: View {
 
     private var passwordField: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Password")
+            Text("Password".loc)
                 .font(.cairnScaled(size: 13, weight: .medium))
                 .foregroundStyle(t.textBody)
             SecureField("", text: $password)
@@ -190,7 +190,7 @@ public struct SessionSignInSheet: View {
                     RoundedRectangle(cornerRadius: 7, style: .continuous)
                         .strokeBorder(t.divider, lineWidth: 0.5)
                 )
-                .accessibilityLabel("Password")
+                .accessibilityLabel("Password".loc)
         }
     }
 
@@ -204,7 +204,7 @@ public struct SessionSignInSheet: View {
                         .controlSize(.small)
                         .tint(t.primaryInk)
                 }
-                Text(isSubmitting ? "Signing in…" : "Sign in")
+                Text(isSubmitting ? "Signing in…".loc : "Sign in".loc)
                     .font(.cairnScaled(size: 15, weight: .semibold))
                     .foregroundStyle(t.primaryInk)
             }
@@ -214,7 +214,7 @@ public struct SessionSignInSheet: View {
         }
         .buttonStyle(.plain)
         .disabled(!canSubmit || isSubmitting)
-        .accessibilityLabel(isSubmitting ? "Signing in" : "Sign in")
+        .accessibilityLabel(isSubmitting ? "Signing in".loc : "Sign in".loc)
         .accessibilityHint("Calls /api/auth/login on your Immich server")
     }
 
@@ -240,7 +240,7 @@ public struct SessionSignInSheet: View {
             // the host's reconciliation runs a hair later.
             onDismiss()
         case .invalidCredentials:
-            inlineError = "Invalid email or password. Check your Immich credentials and try again."
+            inlineError = "Invalid email or password. Check your Immich credentials and try again.".loc
         case .serverError(let code, let body):
             inlineError = "Immich returned HTTP \(code): \(body)"
         case .networkError(let message):

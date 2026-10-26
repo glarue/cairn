@@ -103,6 +103,10 @@ public struct CairnSettings: Sendable, Codable, Equatable {
     /// one scheme more readable — can pin `.light` or `.dark` here.
     public var appearance: AppearanceOverride
 
+    /// User-facing override for the app's display language. Default is `.system`
+    /// which follows iOS Settings → General → Language & Region.
+    public var appLanguage: AppLanguage
+
     /// Surface a prominent Status banner when the total deletion
     /// backlog (held-by-quarantine + pending-review + eligible-to-
     /// trash) reaches this count. 0 disables the banner entirely.
@@ -323,6 +327,7 @@ public struct CairnSettings: Sendable, Codable, Equatable {
         iCloudDownloadLimitMB: Int = 100,
         iCloudMaxEverBytesMB: Int? = nil,
         appearance: AppearanceOverride = .system,
+        appLanguage: AppLanguage = .system,
         deletionBacklogAlertThreshold: Int = 25,
         thumbnailCacheCapMB: Int = 100,
         thumbhashCapMB: Int = 5,
@@ -345,6 +350,7 @@ public struct CairnSettings: Sendable, Codable, Equatable {
         self.iCloudDownloadLimitMB = iCloudDownloadLimitMB
         self.iCloudMaxEverBytesMB = iCloudMaxEverBytesMB
         self.appearance = appearance
+        self.appLanguage = appLanguage
         self.deletionBacklogAlertThreshold = deletionBacklogAlertThreshold
         self.thumbnailCacheCapMB = thumbnailCacheCapMB
         self.thumbhashCapMB = thumbhashCapMB
@@ -369,7 +375,7 @@ public struct CairnSettings: Sendable, Codable, Equatable {
     private enum CodingKeys: String, CodingKey {
         case maxDeletePercent, minDeleteFloor, notifyOnAbort
         case verboseLogging, deletionStrictness, quarantineDays
-        case iCloudDownloadLimitMB, iCloudMaxEverBytesMB, appearance
+        case iCloudDownloadLimitMB, iCloudMaxEverBytesMB, appearance, appLanguage
         case deletionBacklogAlertThreshold
         case thumbnailCacheCapMB, thumbhashCapMB
         case indexingScope
@@ -395,6 +401,7 @@ public struct CairnSettings: Sendable, Codable, Equatable {
         self.iCloudDownloadLimitMB = try c.decodeIfPresent(Int.self, forKey: .iCloudDownloadLimitMB) ?? d.iCloudDownloadLimitMB
         self.iCloudMaxEverBytesMB = try c.decodeIfPresent(Int.self, forKey: .iCloudMaxEverBytesMB) ?? d.iCloudMaxEverBytesMB
         self.appearance = try c.decodeIfPresent(AppearanceOverride.self, forKey: .appearance) ?? d.appearance
+        self.appLanguage = try c.decodeIfPresent(AppLanguage.self, forKey: .appLanguage) ?? d.appLanguage
         self.deletionBacklogAlertThreshold = try c.decodeIfPresent(Int.self, forKey: .deletionBacklogAlertThreshold) ?? d.deletionBacklogAlertThreshold
         self.thumbnailCacheCapMB = try c.decodeIfPresent(Int.self, forKey: .thumbnailCacheCapMB) ?? d.thumbnailCacheCapMB
         self.thumbhashCapMB = try c.decodeIfPresent(Int.self, forKey: .thumbhashCapMB) ?? d.thumbhashCapMB
@@ -602,6 +609,24 @@ public enum AppearanceOverride: String, Sendable, Codable, Equatable, CaseIterab
     case light
     /// Force dark mode regardless of the system preference.
     case dark
+}
+
+/// User-facing override for the app's display language.
+public enum AppLanguage: String, Sendable, Codable, Equatable, CaseIterable {
+    /// Follow the device's system language (default).
+    case system
+    /// Force English interface.
+    case english
+    /// Force Simplified Chinese (简体中文) interface.
+    case chineseSimplified
+
+    public var displayName: String {
+        switch self {
+        case .system: return "跟随系统"
+        case .english: return "English"
+        case .chineseSimplified: return "简体中文"
+        }
+    }
 }
 
 /// How aggressively cairn translates "no longer in the local library"

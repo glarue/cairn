@@ -1,0 +1,61 @@
+/* Tabs & Common */
+"Status" = "状态";
+"Runs" = "运行记录";
+"Settings" = "设置";
+"Back" = "返回";
+"Done" = "完成";
+"Cancel" = "取消";
+"Close" = "关闭";
+"OK" = "好";
+"Save" = "保存";
+"Delete" = "删除";
+"Edit" = "编辑";
+"Retry" = "重试";
+"Refresh" = "刷新";
+"Confirm" = "确认";
+"Copy" = "复制";
+"Copied" = "已复制";
+"Reveal" = "显示";
+"Hide" = "隐藏";
+"Continue" = "继续";
+"Skip for now" = "暂且跳过";
+"Language" = "语言";
+
+/* Status */
+"Sync now" = "立即同步";
+"Syncing…" = "正在同步…";
+"Stop" = "停止";
+"Cancelling…" = "正在取消…";
+"Up to date" = "已是最新";
+"Library" = "照片库";
+"Local" = "本地照片";
+"Indexed" = "已索引";
+"Server" = "服务器";
+"Matched" = "已匹配";
+"Candidates" = "候选删除";
+"Ready to trash" = "可移入废纸篓";
+"Pending review" = "待审核";
+"Recent runs" = "最近运行";
+"Latest journal" = "最新日志";
+
+/* Appearance */
+"Appearance" = "外观设置";
+"Color scheme" = "颜色主题";
+"Time format" = "时间格式";
+"Auto" = "自动";
+"Light" = "浅色";
+"Dark" = "深色";
+"System" = "跟随系统";
+
+/* Initial Scan */
+"Indexing your library" = "索引照片库";
+"processed" = "已处理";
+"ELAPSED" = "已耗时";
+"REMAINING" = "预估剩余";
+"Start indexing" = "开始索引";
+"Resume indexing" = "继续索引";
+"Stop indexing" = "停止索引";
+"Scan options" = "扫描选项";
+"Continue in app" = "在应用中继续";
+"Start over" = "重新开始";
+

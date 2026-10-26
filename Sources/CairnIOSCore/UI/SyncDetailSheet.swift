@@ -68,13 +68,13 @@ public struct SyncDetailSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     currentPhaseCard
-                    KeylineSection("Phase timeline")
+                    KeylineSection("Phase timeline".loc)
                     timelineCard
-                    KeylineSection("Activity")
+                    KeylineSection("Activity".loc)
                     activityCard
                     if isSyncing {
                         Button(action: onCancel) {
-                            Text("Cancel sync")
+                            Text("Cancel sync".loc)
                                 .font(.cairnScaled(size: 14, weight: .medium))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
@@ -101,7 +101,7 @@ public struct SyncDetailSheet: View {
             Spacer().frame(width: 60)
             Spacer()
             VStack(spacing: 1) {
-                Text("Sync detail")
+                Text("Sync detail".loc)
                     .font(.cairnScaled(size: 15, weight: .semibold))
                     .foregroundStyle(t.text)
                 Text(headerSubtitle)
@@ -110,7 +110,7 @@ public struct SyncDetailSheet: View {
                     .monospacedDigit()
             }
             Spacer()
-            Button("Close", action: onClose)
+            Button("Close".loc, action: onClose)
                 .font(.cairnScaled(size: 15))
                 .foregroundStyle(t.textBody)
                 .frame(width: 60, alignment: .trailing)
@@ -126,8 +126,8 @@ public struct SyncDetailSheet: View {
     }
 
     private var headerSubtitle: String {
-        if isSyncing { return "in progress" }
-        if !timeline.isEmpty { return "last sync" }
+        if isSyncing { return "in progress".loc }
+        if !timeline.isEmpty { return "last sync".loc }
         return "—"
     }
 
@@ -141,7 +141,7 @@ public struct SyncDetailSheet: View {
                         Circle()
                             .fill(isSyncing ? t.pendingInk : t.textHint)
                             .frame(width: 8, height: 8)
-                        Text(phase.displayName)
+                        Text(phase.displayName.loc)
                             .font(.cairnScaled(size: 16, weight: .semibold))
                             .foregroundStyle(t.text)
                         Spacer(minLength: 8)
@@ -151,7 +151,7 @@ public struct SyncDetailSheet: View {
                     }
                     if let progress, progress.total > 0, isSyncing && phase == .hashing {
                         progressBar(fraction: min(1.0, Double(progress.hashed) / Double(progress.total)))
-                        Text("\(progress.hashed.formatted(.number)) / \(progress.total.formatted(.number)) hashed")
+                        Text("\(progress.hashed.formatted(.number)) / \(progress.total.formatted(.number)) \("hashed".loc)")
                             .font(.cairnScaled(size: 12, design: .monospaced))
                             .foregroundStyle(t.textMuted)
                     }
@@ -207,7 +207,7 @@ public struct SyncDetailSheet: View {
                 // current hash is fast or stalled on iCloud.
                 HStack(spacing: 8) {
                     if elapsed >= 3 {
-                        Text("Elapsed \(elapsedShort(elapsed))")
+                        Text("\("Elapsed".loc) \(elapsedShort(elapsed))")
                             .font(.cairnScaled(size: 11, design: .monospaced))
                             .foregroundStyle(t.textMuted)
                     } else {
@@ -219,7 +219,7 @@ public struct SyncDetailSheet: View {
                     }
                     if let fraction = item.downloadFraction {
                         Spacer(minLength: 6)
-                        Text("Downloading \(Int(fraction * 100))%")
+                        Text("\("Downloading".loc) \(Int(fraction * 100))%")
                             .font(.cairnScaled(size: 11, design: .monospaced))
                             .foregroundStyle(t.textMuted)
                     }
@@ -237,7 +237,7 @@ public struct SyncDetailSheet: View {
                     Image(systemName: "doc")
                         .font(.cairnScaled(size: 11))
                         .foregroundStyle(t.textHint.opacity(0.5))
-                    Text("Idle between hashes…")
+                    Text("Idle between hashes…".loc)
                         .font(.cairnScaled(size: 12, design: .monospaced))
                         .foregroundStyle(t.textMuted)
                     Spacer(minLength: 6)
@@ -412,8 +412,8 @@ public struct SyncDetailSheet: View {
 
     private func rowDurationLabel(for row: TimelineRow) -> String {
         if let ms = row.durationMs { return Self.formatDuration(ms: ms) }
-        if row.isLive { return "live" }
-        if row.isSkipped { return "skipped" }
+        if row.isLive { return "live".loc }
+        if row.isSkipped { return "skipped".loc }
         return "—"
     }
 
@@ -442,7 +442,7 @@ public struct SyncDetailSheet: View {
         CairnCard {
             VStack(spacing: 0) {
                 if activity.isEmpty {
-                    Text(isSyncing ? "Waiting for activity…" : "No recent activity.")
+                    Text(isSyncing ? "Waiting for activity…".loc : "No recent activity.".loc)
                         .font(.cairnScaled(size: 12))
                         .foregroundStyle(t.textMuted)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -484,12 +484,12 @@ public struct SyncDetailSheet: View {
 
     private func activityKindLabel(_ kind: CairnAppModel.SyncActivity.Kind) -> String {
         switch kind {
-        case .phaseStart: "phase"
-        case .hashed:     "hashed"
-        case .fetched:    "fetched"
-        case .stamped:    "stamped"
-        case .note:       "note"
-        case .warning:    "warn"
+        case .phaseStart: "phase".loc
+        case .hashed:     "hashed".loc
+        case .fetched:    "fetched".loc
+        case .stamped:    "stamped".loc
+        case .note:       "note".loc
+        case .warning:    "warn".loc
         }
     }
 
